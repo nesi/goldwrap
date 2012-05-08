@@ -1,11 +1,11 @@
 package nz.org.nesi.goldwrap.impl;
 
-import goldwrap.control.ExternalCommand;
 
 import javax.jws.WebService;
 import javax.ws.rs.Path;
 
 import nz.org.nesi.goldwrap.api.GoldWrapService;
+import nz.org.nesi.goldwrap.domain.ExternalCommand;
 import nz.org.nesi.goldwrap.domain.User;
 import nz.org.nesi.goldwrap.errors.ServiceException;
 import nz.org.nesi.goldwrap.errors.UserFault;

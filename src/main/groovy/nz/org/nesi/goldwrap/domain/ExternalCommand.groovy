@@ -1,4 +1,4 @@
-package goldwrap.control
+package nz.org.nesi.goldwrap.domain
 
 
 import java.util.List;
