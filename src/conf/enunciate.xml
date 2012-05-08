@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<enunciate label="goldwrap" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://enunciate.codehaus.org/schemas/enunciate-1.25.xsd">
+   <namespaces>
+      <namespace id="api" uri="http://api.goldwrap.nesi.org.nz/" />
+      <namespace id="user" uri="http://goldwrap.nesi.org.nz/user" />
+      <namespace id="errors" uri="http://goldwrap.nesi.org.nz/errors" />
+   </namespaces>
+   <modules>
+      <!-- Docs -->
+      <docs splashPackage="nz.org.nesi.api" title="goldwrap" copyright="nesi.org.nz"/>
+   </modules>
+</enunciate>
