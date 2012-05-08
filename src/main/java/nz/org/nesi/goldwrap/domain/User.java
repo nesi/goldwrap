@@ -5,7 +5,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class User {
 
-	private String userName;
+	private String userId;
 	private String firstName;
 	private String middleName;
 	private String lastName;
@@ -61,8 +61,8 @@ public class User {
 		return position;
 	}
 
-	public String getUserName() {
-		return userName;
+	public String getUserId() {
+		return userId;
 	}
 
 	public void setAddress(String address) {
@@ -105,8 +105,8 @@ public class User {
 		this.position = position;
 	}
 
-	public void setUserName(String userName) {
-		this.userName = userName;
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 
 }

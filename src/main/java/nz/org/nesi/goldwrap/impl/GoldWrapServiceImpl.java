@@ -1,6 +1,5 @@
 package nz.org.nesi.goldwrap.impl;
 
-
 import javax.jws.WebService;
 import javax.ws.rs.Path;
 
@@ -75,10 +74,10 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	public void createUser(User user) {
 
-		String username = user.getUserName();
+		String username = user.getUserId();
 		if (StringUtils.isBlank(username)) {
 			throw new UserFault(user, "Can't create user.",
-					"Username field can't be blank.");
+					"UserId field can't be blank.");
 		}
 
 		String phone = user.getPhone();
@@ -151,9 +150,9 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 
 		User u = extractObject(User.class, ec.getStdOut().get(0));
-		if (!username.equals(u.getUserName())) {
+		if (!username.equals(u.getUserId())) {
 			throw new ServiceException("Internal error",
-					"Gold username and username in description don't match for user '"
+					"Gold userId and userId in description don't match for user '"
 							+ username + "'");
 		}
 		return u;
@@ -178,8 +177,8 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 					"Username field can't be blank.");
 		}
 
-		if (StringUtils.isNotBlank(user.getUserName())
-				&& !username.equals(user.getUserName())) {
+		if (StringUtils.isNotBlank(user.getUserId())
+				&& !username.equals(user.getUserId())) {
 			throw new UserFault(user, "Can't modify user.",
 					"Username can't be changed.");
 		}
