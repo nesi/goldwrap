@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import nz.org.nesi.goldwrap.Config
 import nz.org.nesi.goldwrap.errors.GoldCommandException
 
 
