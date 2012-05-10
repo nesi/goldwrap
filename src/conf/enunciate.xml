@@ -6,8 +6,8 @@
       <namespace id="errors" uri="http://goldwrap.nesi.org.nz/errors" />
    </namespaces>
 
-   	<webapp mergeWebXML="mergeWeb.xml">
-	</webapp>   
+<!--    	<webapp mergeWebXML="mergeWeb.xml"> -->
+<!-- 	</webapp>    -->
    <modules>
       <!-- Docs -->
       <docs splashPackage="nz.org.nesi.api" title="goldwrap" copyright="nesi.org.nz" groupRestResources="byPath"/>

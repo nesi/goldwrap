@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import nz.org.nesi.goldwrap.Config;
 import nz.org.nesi.goldwrap.errors.GoldCommandException
 
 
@@ -15,7 +16,7 @@ import nz.org.nesi.goldwrap.errors.GoldCommandException
 @Slf4j
 class ExternalCommand {
 
-	static boolean useSSH = false
+	static boolean useSSH = Config.useSSH()
 
 	static hasMany = [stdout : String, stderr : String]
 

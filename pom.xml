@@ -262,6 +262,11 @@
 			<artifactId>jcl-over-slf4j</artifactId>
 			<version>1.6.4</version>
 		</dependency>
+		<dependency>
+			<groupId>commons-configuration</groupId>
+			<artifactId>commons-configuration</artifactId>
+			<version>1.8</version>
+		</dependency>
 	</dependencies>
 
 	<parent>
@@ -269,4 +274,174 @@
 		<artifactId>nesi</artifactId>
 		<version>0.11</version>
 	</parent>
+	
+	<profiles>
+	
+		<profile>
+			<id>deb</id>
+			<!-- <activation> -->
+			<!-- <property> -->
+			<!-- <name>BUILD_NUMBER</name> -->
+			<!-- </property> -->
+			<!-- </activation> -->
+
+			<build>
+			<finalName>goldwrap</finalName>
+			
+				<plugins>
+
+					<plugin>
+						<artifactId>maven-resources-plugin</artifactId>
+						<version>2.5</version>
+						<executions>
+							<execution>
+								<id>copy-deb-control</id>
+								<!-- here the phase you need -->
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/target/deb/control</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${basedir}/src/deb/control</directory>
+											<filtering>false</filtering>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.6</version>
+						<executions>
+							<execution>
+								<id>fix_permission</id>
+								<phase>prepare-package</phase>
+								<configuration>
+									<target>
+										<chmod file="target/deb/control/postinst" perm="755" />
+									</target>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>com.google.code.maven-replacer-plugin</groupId>
+						<artifactId>maven-replacer-plugin</artifactId>
+						<version>1.4.0</version>
+						<executions>
+							<execution>
+								<id>fix_deb_version</id>
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>replace</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<includes>
+								<include>target/deb/control/control</include>
+							</includes>
+							<ignoreMissingFile>false</ignoreMissingFile>
+
+							<replacements>
+								<replacement>
+									<token>VERSION_TOKEN</token>
+									<value>${project.version}</value>
+								</replacement>
+							</replacements>
+						</configuration>
+					</plugin>
+
+
+					<plugin>
+						<artifactId>jdeb</artifactId>
+						<groupId>org.vafer</groupId>
+						<version>0.9</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<id>build-deb</id>
+								<goals>
+									<goal>jdeb</goal>
+								</goals>
+								<configuration>
+									<changesIn>CHANGES.txt</changesIn>
+									<deb>[[buildDir]]/goldwrap-${project.version}.deb</deb>
+									<controlDir>target/deb/control</controlDir>
+									<!-- <installDir>/opt/grisu</installDir> -->
+									<dataSet>
+										<data>
+											<src>${project.build.directory}/${project.build.finalName}.war</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/var/lib/goldwrap/</prefix>
+												<user>tomcat6</user>
+												<group>tomcat6</group>
+											</mapper>
+										</data>
+
+										<data>
+											<src>${project.basedir}/src/deb/data/goldwrap.xml</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/etc/tomcat6/Catalina/localhost/</prefix>
+												<user>tomcat6</user>
+												<group>tomcat6</group>
+											</mapper>
+										</data>
+										<data>
+											<src>${project.basedir}/src/deb/data/goldwrap.config</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/etc/goldwrap/</prefix>
+												<user>tomcat6</user>
+												<group>tomcat6</group>
+											</mapper>
+										</data>
+										<data>
+											<src>${project.basedir}/src/main/resources/logback.xml</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/usr/share/doc/goldwrap/examples</prefix>
+												<user>root</user>
+												<group>root</group>
+											</mapper>
+										</data>
+										<data>
+											<src>${project.basedir}/src/deb/data/goldwrap-ajp.conf</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/usr/share/doc/goldwrap/examples</prefix>
+												<user>root</user>
+												<group>root</group>
+											</mapper>
+										</data>
+
+									</dataSet>
+
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+
+		</profile>	
+		</profiles>
+	
 </project>
