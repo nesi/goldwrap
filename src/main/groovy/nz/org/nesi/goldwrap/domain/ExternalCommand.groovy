@@ -15,7 +15,7 @@ import nz.org.nesi.goldwrap.errors.GoldCommandException
 @Slf4j
 class ExternalCommand {
 
-	static boolean useSSH = true
+	static boolean useSSH = false
 
 	static hasMany = [stdout : String, stderr : String]
 
