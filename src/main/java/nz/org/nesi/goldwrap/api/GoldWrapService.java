@@ -27,6 +27,8 @@ public interface GoldWrapService {
 
 	/**
 	 * Gets all projects from the Gold database.
+	 * 
+	 * @return a list of all {@link Project}s
 	 */
 	@GET
 	@Path("/projects")
@@ -120,7 +122,7 @@ public interface GoldWrapService {
 	/**
 	 * Returns a list of all users currently registered in Gold.
 	 * 
-	 * @return all users
+	 * @return a list of all {@link User}s
 	 */
 	@GET
 	@Path("/users")
