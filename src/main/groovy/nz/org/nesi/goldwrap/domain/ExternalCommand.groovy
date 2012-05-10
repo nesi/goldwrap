@@ -7,7 +7,6 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import nz.org.nesi.goldwrap.Config;
 import nz.org.nesi.goldwrap.errors.GoldCommandException
 
 
@@ -15,8 +14,6 @@ import nz.org.nesi.goldwrap.errors.GoldCommandException
 @XmlRootElement
 @Slf4j
 class ExternalCommand {
-
-	static boolean useSSH = Config.useSSH()
 
 	static hasMany = [stdout : String, stderr : String]
 
@@ -36,8 +33,8 @@ class ExternalCommand {
 	}
 
 	public String command() {
-		if ( useSSH ) {
-			return 'ssh gold@gold /opt/gold/bin/'+command
+		if ( Config.getCommandPrefix() ) {
+			return Config.getCommandPrefix()+command
 		} else {
 			return command
 		}

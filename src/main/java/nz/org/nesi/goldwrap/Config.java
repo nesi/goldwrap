@@ -48,12 +48,13 @@ public class Config {
 		return config;
 	}
 
-	public static boolean useSSH() {
-		boolean verify = false;
+	public static String getCommandPrefix() {
+		String prefix = "";
 
 		try {
 			try {
-				verify = getServerConfiguration().getBoolean("useSSH");
+				prefix = getServerConfiguration().getString("prefix");
+
 			} catch (final NoSuchElementException e) {
 				// doesn't matter
 				// myLogger.debug(e.getLocalizedMessage(), e);
@@ -62,7 +63,7 @@ public class Config {
 		} catch (final ConfigurationException e) {
 			myLogger.debug(e.getLocalizedMessage());
 		}
-		return verify;
+		return prefix;
 
 	}
 
