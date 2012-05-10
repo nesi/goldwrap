@@ -1,0 +1,76 @@
+<configuration>
+
+ <logger name="nz.org.nesi" level="debug"/>
+ 
+
+<!--  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/var/log/grisu/grisu.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>/var/log/grisu/grisu.log.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+      <maxHistory>10</maxHistory>
+    </rollingPolicy>
+
+    <encoder>
+      <pattern>%-50(%d{HH:mm:ss.SSS} [%level] [%thread]) [%logger{0}] tid=[%X{tid}] csid=[%X{csid}] cmdid=[%X{cmdid}] user=[%X{user}] - %msg%n</pattern>
+    </encoder>
+  </appender> --> 
+
+
+  <appender name="STDOUT"
+    class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%-50(%d{HH:mm:ss.SSS} [%level] [%thread]) [%logger{0}] tid=[%X{tid}] csid=[%X{csid}] cmdid=[%X{cmdid}] user=[%X{user}] - %msg%n</pattern>
+    </encoder>
+  </appender>
+  
+<!-- <appender name="SYSLOG" class="grisu.control.util.SyslogAppender">
+    <syslogHost>localhost</syslogHost>
+    <facility>USER</facility>
+    <suffixPattern>[%level] [%thread] [%logger{0}] tid=[%X{tid}] csid=[%X{csid}] cmdid=[%X{cmdid}] user=[%X{user}] - %msg%n</suffixPattern>
+  </appender> -->
+  
+<!--  <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <discriminator>
+      <key>user</key>
+      <defaultValue>grisu</defaultValue>
+    </discriminator>
+    <sift>
+      <appender name="FILE-${userid}" class="ch.qos.logback.core.FileAppender">
+        <file>/var/log/grisu/${user}.log</file>
+        <append>false</append>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+          <pattern>%-50(%d{HH:mm:ss.SSS} [%level] [%thread]) [%logger{0}] tid=[%X{tid}] csid=[%X{csid}] cmdid=[%X{cmdid}] user=[%X{user}] - %msg%n</pattern>
+        </layout>
+      </appender>
+    </sift>
+  </appender> -->
+  
+  <!--
+    <appender name="GRAYLOG" class="me.moocar.logbackgelf.GelfAppender">
+        <facility>grisu-backend-test</facility>
+        <graylog2ServerHost>logstash.ceres.auckland.ac.nz</graylog2ServerHost>
+        <graylog2ServerPort>12201</graylog2ServerPort>
+        <useLoggerName>true</useLoggerName>
+        <useThreadName>true</useThredName>
+        <graylog2ServerVersion>0.9.6</graylog2ServerVersion>
+        <chunkThreshold>1000</chunkThreshold>
+        <additionalField>tid:_transaction_id</additionalField>
+        <additionalField>user:_user</additionalField>
+        <additionalField>csid:_client_session_id</additionalField>
+        <additionalField>cmdid:_command_id</additionalField>
+        <additionalField>client:_client</additionalField>
+        <additionalField>dn:_dn</additionalField>
+    </appender> -->
+
+
+
+  <root>
+    <level value="warn" />
+<!--     <appender-ref ref="FILE" /> -->
+<!--     <appender-ref ref="SYSLOG" /> -->
+<!--     <appender-ref ref="GRAYLOG" /> -->
+<!--     <appender-ref ref="SIFT" /> -->
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>
