@@ -178,7 +178,7 @@ class GoldHelper {
 	public static Project getProject(String projName) {
 
 		if (! projectExists(projName)) {
-			throw new ProjectFault("Project " + projName + " not found.", "Project does not exist in Gold.", 404);
+			throw new ProjectFault("Project " + projName + " not found.", "Project "+projName+" does not exist in Gold.", 404);
 		}
 
 		ExternalCommand ec = new ExternalCommand('glsproject -A --raw '+projName)
@@ -186,7 +186,7 @@ class GoldHelper {
 		def map = parseGLSOutput(ec.getStdOut())
 
 		if ( map.size() == 0 ) {
-			throw new ProjectFault("Project " + projName + " not found.", "Project does not exist in Gold.", 404);
+			throw new ProjectFault("Project " + projName + " not found.", "Project "+projName+" does not exist in Gold.", 404);
 		}
 
 		if ( map.size() > 1 ) {
@@ -217,6 +217,11 @@ class GoldHelper {
 	}
 
 	public static List<Project> getProjectsForUser(String username) {
+
+		if (! isRegistered(username) ) {
+			throw new UserFault("Can't retrieve user.", "User " + username
+			+ " not in Gold database.", 404);
+		}
 
 		def projects = getAllProjects().findAll() { proj ->
 			proj.getUsers().contains(username)
