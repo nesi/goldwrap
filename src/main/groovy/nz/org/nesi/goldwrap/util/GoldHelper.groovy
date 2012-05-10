@@ -177,6 +177,10 @@ class GoldHelper {
 
 	public static Project getProject(String projName) {
 
+		if (! projectExists(projName)) {
+			throw new ProjectFault("Project " + projName + " not found.", "Project does not exist in Gold.");
+		}
+
 		ExternalCommand ec = new ExternalCommand('glsproject -A --raw '+projName)
 		ec.execute()
 		def map = parseGLSOutput(ec.getStdOut())
