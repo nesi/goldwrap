@@ -1,0 +1,9 @@
+Package: goldwrap
+Version: VERSION_TOKEN
+Section: misc
+Priority: optional
+Architecture: all
+Depends: java-sdk, tomcat6, bzip2, unzip, zip
+Recommends: apache2, git
+Maintainer: Markus Binsteiner <m.binsteiner@auckland.ac.nz>
+Description: Webservice wrapper for GOLD

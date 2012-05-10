@@ -1,0 +1,61 @@
+#!/bin/sh
+# postinst script for hudson
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+
+case "$1" in
+    configure)
+    
+
+    	/etc/init.d/tomcat6 stop	
+
+
+		# remove deployed webapp from tomcat, just to be sure
+		if [ -d /var/lib/tomcat6/webapps/goldwrap ]; then
+			rm -rf /var/lib/tomcat6/webapps/goldwrap
+		fi
+		
+		# adjust permissions
+		if [ ! -d /var/lib/goldwrap/ ]; then
+			mkdir -p /var/lib/goldwrap/
+		fi
+		chown -R tomcat6:tomcat6 /var/lib/goldwrap
+
+		
+		# create log dir
+		if [ ! -d /var/log/goldwrap ]; then
+			mkdir /var/log/goldwrap
+			chown -R tomcat6:tomcat6 /var/log/goldwrap
+		fi
+		
+		/etc/init.d/tomcat6 start
+	;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+		
+esac
+
+
+
+
