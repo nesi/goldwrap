@@ -386,8 +386,8 @@
 											<mapper>
 												<type>perm</type>
 												<prefix>/var/lib/goldwrap/</prefix>
-												<user>tomcat6</user>
-												<group>tomcat6</group>
+												<user>gold</user>
+												<group>gold</group>
 											</mapper>
 										</data>
 
@@ -397,8 +397,8 @@
 											<mapper>
 												<type>perm</type>
 												<prefix>/etc/tomcat6/Catalina/localhost/</prefix>
-												<user>tomcat6</user>
-												<group>tomcat6</group>
+												<user>gold</user>
+												<group>gold</group>
 											</mapper>
 										</data>
 										<data>
@@ -407,8 +407,8 @@
 											<mapper>
 												<type>perm</type>
 												<prefix>/etc/goldwrap/</prefix>
-												<user>tomcat6</user>
-												<group>tomcat6</group>
+												<user>gold</user>
+												<group>gold</group>
 											</mapper>
 										</data>
 										<data>
