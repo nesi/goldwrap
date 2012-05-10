@@ -1,25 +1,27 @@
 package nz.org.nesi.goldwrap.impl;
 
+import java.util.List;
+
 import javax.jws.WebService;
 import javax.ws.rs.Path;
 
 import nz.org.nesi.goldwrap.api.GoldWrapService;
 import nz.org.nesi.goldwrap.domain.ExternalCommand;
+import nz.org.nesi.goldwrap.domain.Project;
 import nz.org.nesi.goldwrap.domain.User;
+import nz.org.nesi.goldwrap.errors.ProjectFault;
 import nz.org.nesi.goldwrap.errors.ServiceException;
 import nz.org.nesi.goldwrap.errors.UserFault;
+import nz.org.nesi.goldwrap.util.GoldHelper;
+import nz.org.nesi.goldwrap.utils.JSONHelpers;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.map.AnnotationIntrospector;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
-import org.codehaus.jackson.xc.JaxbAnnotationIntrospector;
+
+import com.google.common.base.Joiner;
 
 @WebService(endpointInterface = "nz.org.nesi.goldwrap.api.GoldWrapService", name = "GoldWrapService")
 @Path("/goldwrap")
 public class GoldWrapServiceImpl implements GoldWrapService {
-
-	private static ObjectMapper mapper = null;
 
 	private static ExternalCommand executeGoldCommand(String command) {
 		ExternalCommand gc = new ExternalCommand(command);
@@ -28,22 +30,11 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		return gc;
 	}
 
-	private static ObjectMapper getMapper() {
-		if (mapper == null) {
-			AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
-			AnnotationIntrospector secondary = new JaxbAnnotationIntrospector();
-			AnnotationIntrospector pair = new AnnotationIntrospector.Pair(
-					primary, secondary);
-
-			mapper = new ObjectMapper();
-			AnnotationIntrospector introspector = new JaxbAnnotationIntrospector();
-			// make deserializer use JAXB annotations (only)
-			mapper.getDeserializationConfig().withAnnotationIntrospector(pair);
-			// make serializer use JAXB annotations (only)
-			mapper.getSerializationConfig().withAnnotationIntrospector(pair);
-
+	private void checkProjectname(String projectname) {
+		if (StringUtils.isBlank(projectname)) {
+			throw new ServiceException("Can't execute operation.",
+					"Projectname blank or not specified.");
 		}
-		return mapper;
 	}
 
 	private void checkUsername(String username) {
@@ -53,58 +44,98 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 	}
 
-	private <T> T convertFromJSONString(String json, Class<T> objectType) {
-		try {
-			return getMapper().readValue(json, objectType);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
-	}
+	public void createProject(Project proj) {
 
-	private String convertToJSONString(Object o) {
+		String projName = proj.getProjectId();
 
-		try {
-			return getMapper().writeValueAsString(o);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
+		proj.validate(true);
+
+		if (GoldHelper.projectExists(projName)) {
+			throw new ProjectFault(proj, "Can't create project " + projName,
+					"Project name '" + projName + "' already exists in Gold.");
 		}
+
+		for (String userId : proj.getUsers()) {
+			if (!GoldHelper.isRegistered(userId)) {
+				throw new ProjectFault(proj,
+						"Can't create project " + projName, "User '" + userId
+								+ "' does not exist in Gold yet.");
+			}
+		}
+
+		StringBuffer command = new StringBuffer("gmkproject ");
+
+		String desc = JSONHelpers.convertToJSONString(proj);
+		command.append("-d '" + desc + "' ");
+
+		String users = Joiner.on(",").join(proj.getUsers());
+
+		if (StringUtils.isNotBlank(users)) {
+			command.append("-u '" + users + "' ");
+		}
+
+		command.append(projName);
+
+		ExternalCommand ec = executeGoldCommand(command.toString());
+
+		if (!GoldHelper.projectExists(projName)) {
+			throw new ProjectFault(proj, "Can't create project.",
+					"Unknow reason");
+		}
+
 	}
 
 	public void createUser(User user) {
 
+		user.validate();
+
 		String username = user.getUserId();
-		if (StringUtils.isBlank(username)) {
-			throw new UserFault(user, "Can't create user.",
-					"UserId field can't be blank.");
-		}
-
 		String phone = user.getPhone();
-		if (StringUtils.isBlank(phone)) {
-			throw new UserFault(user, "Can't create user " + username + ".",
-					"No phone number provided.");
-		}
-
+		String email = user.getAltEmail();
 		String fullName = user.getLastName() + ", " + user.getFirstName();
-		String email = user.getEmail();
+		String institution = user.getInstitution();
 
-		if (isRegistered(username)) {
+		if (GoldHelper.isRegistered(username)) {
 			throw new UserFault("Can't create user.", "User " + username
 					+ " already in Gold database.", 409);
 		}
 
-		String desc = convertToJSONString(user);
+		String desc = JSONHelpers.convertToJSONString(user);
 
-		String command = "gmkuser -n \"" + fullName + "\" -E " + email
-				+ " -d '" + desc + "' -F " + phone + " " + username;
+		String command = null;
+		if (StringUtils.isBlank(email)) {
+			command = "gmkuser -n \"" + fullName + "\" -d '" + desc + "' -F "
+					+ phone + " " + username;
+		} else {
+			command = "gmkuser -n \"" + fullName + "\" -E " + email + " -d '"
+					+ desc + "' -F " + phone + " " + username;
+		}
 
 		ExternalCommand ec = executeGoldCommand(command);
 
-		if (!isRegistered(username)) {
+		if (!GoldHelper.isRegistered(username)) {
 			throw new UserFault(user, "Can't create user.", "Unknown reason");
 		}
 
+	}
+
+	public void deleteProject(String projName) {
+
+		checkProjectname(projName);
+
+		if (!GoldHelper.projectExists(projName)) {
+			throw new ProjectFault("Can't delete project " + projName + ".",
+					"Project " + projName + " not in Gold database.", 404);
+		}
+
+		String command = "grmproject " + projName;
+		ExternalCommand ec = executeGoldCommand(command);
+
+		if (GoldHelper.projectExists(projName)) {
+			throw new ProjectFault(
+					"Could not delete project " + projName + ".",
+					"Unknown reason.", 500);
+		}
 	}
 
 	public void deleteUser(String username) {
@@ -114,7 +145,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 					"Username blank or not specified.");
 		}
 
-		if (!isRegistered(username)) {
+		if (!GoldHelper.isRegistered(username)) {
 			throw new UserFault("Can't delete user.", "User " + username
 					+ " not in Gold database.", 404);
 		}
@@ -122,52 +153,91 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		String command = "grmuser " + username;
 		ExternalCommand ec = executeGoldCommand(command);
 
-		if (isRegistered(username)) {
+		if (GoldHelper.isRegistered(username)) {
 			throw new UserFault("Could not delete user.", "Unknown reason.",
 					500);
 		}
 
 	}
 
-	private <T> T extractObject(Class<T> dtoClass, String line) {
-		int index = line.indexOf("{");
-		String temp = line.substring(index);
-		System.out.println(temp);
-		T result = convertFromJSONString(temp, dtoClass);
-		return result;
+	public Project getProject(String projName) {
+
+		checkProjectname(projName);
+
+		return GoldHelper.getProject(projName);
+
+	}
+
+	public List<Project> getProjects() {
+		return GoldHelper.getAllProjects();
+	}
+
+	public List<Project> getProjectsForUser(String username) {
+		return GoldHelper.getProjectsForUser(username);
 	}
 
 	public User getUser(String username) {
 
 		checkUsername(username);
 
-		ExternalCommand ec = executeGoldCommand("glsuser -show Description "
-				+ username + " --quiet");
-
-		if (ec.getStdOut().size() == 0) {
-			throw new UserFault("Can't retrieve user.", "User " + username
-					+ " not in Gold database.", 404);
-		}
-
-		User u = extractObject(User.class, ec.getStdOut().get(0));
-		if (!username.equals(u.getUserId())) {
-			throw new ServiceException("Internal error",
-					"Gold userId and userId in description don't match for user '"
-							+ username + "'");
-		}
+		User u = GoldHelper.getUser(username);
 		return u;
 
 	}
 
-	public boolean isRegistered(String username) {
+	public List<User> getUsers() {
+		return GoldHelper.getAllUsers();
+	}
 
-		ExternalCommand gc = executeGoldCommand("glsuser -show Name -quiet");
+	public List<User> getUsersForProject(String projName) {
+		return GoldHelper.getUsersForProject(projName);
+	}
 
-		if (gc.getStdOut().contains(username)) {
-			return true;
-		} else {
-			return false;
+	public boolean isRegistered(String user) {
+		return GoldHelper.isRegistered(user);
+	}
+
+	public Project modifyProject(String projName, Project project) {
+
+		checkProjectname(projName);
+
+		if (StringUtils.isNotBlank(project.getProjectId())
+				&& !projName.equals(project.getProjectId())) {
+			throw new ProjectFault(project, "Can't modify project.",
+					"Project name can't be changed.");
 		}
+
+		if (!GoldHelper.projectExists(projName)) {
+			throw new ProjectFault("Can't modify project.", "Project "
+					+ projName + " not in Gold database.", 404);
+		}
+
+		for (String userId : project.getUsers()) {
+			if (!GoldHelper.isRegistered(userId)) {
+				throw new ProjectFault(project, "Can't modify project "
+						+ projName, "User '" + userId
+						+ "' does not exist in Gold yet.");
+			}
+		}
+
+		project.validate(false);
+
+		StringBuffer command = new StringBuffer("gchproject ");
+		String desc = JSONHelpers.convertToJSONString(project);
+		command.append("-d '" + desc + "' ");
+
+		String users = Joiner.on(",").join(project.getUsers());
+
+		if (StringUtils.isNotBlank(users)) {
+			command.append("--addUsers '" + users + "' ");
+		}
+
+		command.append(projName);
+
+		ExternalCommand ec = executeGoldCommand(command.toString());
+
+		return getProject(projName);
+
 	}
 
 	public void modifyUser(String username, User user) {
@@ -183,30 +253,39 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 					"Username can't be changed.");
 		}
 
-		if (!isRegistered(username)) {
+		if (!GoldHelper.isRegistered(username)) {
 			throw new UserFault("Can't modify user.", "User " + username
 					+ " not in Gold database.", 404);
 		}
 
-		String phone = user.getPhone();
-		if (StringUtils.isBlank(phone)) {
-			throw new UserFault(user, "Can't create user " + username + ".",
-					"No phone number provided.");
-		}
+		user.validate();
 
 		String fullName = user.getLastName() + ", " + user.getFirstName();
-		String email = user.getEmail();
+		String phone = user.getPhone();
+		String institution = user.getInstitution();
+		String email = user.getAltEmail();
 
-		String desc = convertToJSONString(user);
+		String desc = JSONHelpers.convertToJSONString(user);
 
-		String command = "gchuser -n \"" + fullName + "\" -E " + email
-				+ " -d '" + desc + "' -F " + phone + " " + username;
+		String command = null;
+		if (StringUtils.isBlank(email)) {
+			command = "gchuser -n \"" + fullName + "\" -d '" + desc + "' -F "
+					+ phone + " " + username;
+		} else {
+			command = "gchuser -n \"" + fullName + "\" -E " + email + " -d '"
+					+ desc + "' -F " + phone + " " + username;
+
+		}
 
 		ExternalCommand ec = executeGoldCommand(command);
 
-		if (!isRegistered(username)) {
+		if (!GoldHelper.isRegistered(username)) {
 			throw new UserFault(user, "Can't create user.", "Unknown reason");
 		}
 
+	}
+
+	public Project addUserToProject(String projName, String userId) {
+		return GoldHelper.addUserToProject(projName, userId);
 	}
 }

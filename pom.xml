@@ -41,6 +41,7 @@
 	<build>
 		<plugins>
 
+			<!-- enable jetty:run mojo -->
 			<plugin>
 				<groupId>org.mortbay.jetty</groupId>
 				<artifactId>jetty-maven-plugin</artifactId>
@@ -48,11 +49,10 @@
 					<scanIntervalSeconds>0</scanIntervalSeconds>
 				</configuration>
 			</plugin>
-
+			<!-- enable generation of jrebel.xml - needed for the agent -->
 			<plugin>
 				<groupId>org.zeroturnaround</groupId>
 				<artifactId>jrebel-maven-plugin</artifactId>
-				<version>1.1.1</version>
 				<executions>
 					<execution>
 						<id>generate-rebel-xml</id>
@@ -191,6 +191,25 @@
 										<ignore></ignore>
 									</action>
 								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.zeroturnaround
+										</groupId>
+										<artifactId>
+											jrebel-maven-plugin
+										</artifactId>
+										<versionRange>
+											[1.1.1,)
+										</versionRange>
+										<goals>
+											<goal>generate</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
 							</pluginExecutions>
 						</lifecycleMappingMetadata>
 					</configuration>
@@ -221,7 +240,28 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>12.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.1.1</version>
+			<scope>provided</scope>
+		</dependency>
 
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+			<version>1.6.4</version>
+		</dependency>
 	</dependencies>
 
 	<parent>

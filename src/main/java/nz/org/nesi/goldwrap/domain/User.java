@@ -2,6 +2,10 @@ package nz.org.nesi.goldwrap.domain;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import nz.org.nesi.goldwrap.errors.UserFault;
+
+import org.apache.commons.lang3.StringUtils;
+
 @XmlRootElement
 public class User {
 
@@ -13,7 +17,7 @@ public class User {
 	private String department;
 	private String phone;
 	private String position;
-	private String email;
+	private String altEmail = "";
 	private String address;
 	private String nationality = "New Zealand";
 
@@ -25,12 +29,12 @@ public class User {
 		return address;
 	}
 
-	public String getDepartment() {
-		return department;
+	public String getAltEmail() {
+		return altEmail;
 	}
 
-	public String getEmail() {
-		return email;
+	public String getDepartment() {
+		return department;
 	}
 
 	public String getFirstName() {
@@ -69,12 +73,12 @@ public class User {
 		this.address = address;
 	}
 
-	public void setDepartment(String department) {
-		this.department = department;
+	public void setAltEmail(String email) {
+		this.altEmail = email;
 	}
 
-	public void setEmail(String email) {
-		this.email = email;
+	public void setDepartment(String department) {
+		this.department = department;
 	}
 
 	public void setFirstName(String firstName) {
@@ -107,6 +111,33 @@ public class User {
 
 	public void setUserId(String userId) {
 		this.userId = userId;
+	}
+
+	public void validate() {
+
+		if (StringUtils.isBlank(userId)) {
+			throw new UserFault(this, "Invalid user.",
+					"UserId field can't be blank.");
+		}
+
+		if (StringUtils.isBlank(getPhone())) {
+			throw new UserFault(this, "Invalid user " + userId + ".",
+					"No phone number provided.");
+		}
+
+		if (StringUtils.isBlank(getInstitution())) {
+			throw new UserFault(this, "Invalid user " + userId + ".",
+					"No institution provided.");
+		}
+		if (StringUtils.isBlank(getNationality())) {
+			throw new UserFault(this, "Invalid user " + userId + ".",
+					"No nationality provided");
+		}
+		if (StringUtils.isBlank(getAddress())) {
+			throw new UserFault(this, "Invalid user " + userId + ".",
+					"No address provided");
+		}
+
 	}
 
 }

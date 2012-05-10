@@ -1,6 +1,8 @@
 package nz.org.nesi.goldwrap.domain
 
 
+import groovy.util.logging.Slf4j;
+
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -10,9 +12,10 @@ import nz.org.nesi.goldwrap.errors.GoldCommandException
 
 
 @XmlRootElement
+@Slf4j
 class ExternalCommand {
 
-	static boolean useSSH = false
+	static boolean useSSH = true
 
 	static hasMany = [stdout : String, stderr : String]
 
@@ -70,6 +73,8 @@ class ExternalCommand {
 			throw new RuntimeException("Command already executed.")
 		}
 
+		log.debug("Executing: "+command())
+
 		setExecuted(new Date())
 		def proc = command().execute()
 		proc.waitFor()
@@ -92,6 +97,8 @@ class ExternalCommand {
 			setStdOut(stdout)
 			setStdErr(stderr)
 		}
+
+		log.debug("Executed: "+command())
 	}
 
 	@Override
