@@ -406,9 +406,9 @@
 											<type>file</type>
 											<mapper>
 												<type>perm</type>
-												<prefix>/etc/goldwrap/</prefix>
-												<user>gold</user>
-												<group>gold</group>
+												<prefix>/usr/share/doc/goldwrap/examples</prefix>
+												<user>root</user>
+												<group>root</group>
 											</mapper>
 										</data>
 										<data>
