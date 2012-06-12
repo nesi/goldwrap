@@ -12,8 +12,10 @@ import com.google.common.base.Splitter
 import com.google.common.collect.Lists
 
 import nz.org.nesi.goldwrap.domain.ExternalCommand
+import nz.org.nesi.goldwrap.domain.Machine
 import nz.org.nesi.goldwrap.domain.Project
 import nz.org.nesi.goldwrap.domain.User
+import nz.org.nesi.goldwrap.errors.MachineFault
 import nz.org.nesi.goldwrap.errors.ProjectFault;
 import nz.org.nesi.goldwrap.errors.ServiceException;
 import nz.org.nesi.goldwrap.errors.UserFault
@@ -32,6 +34,10 @@ class GoldHelper {
 	static final String NAME_KEY = "Name"
 	static final String DESCRIPTION_KEY = "Description"
 	static final String USERS = "Users"
+	static final String ACTIVE_KEY = "Active"
+	static final String ARCHITECTURE_KEY = "Architecture"
+	static final String OPERATING_SYSTEM_KEY = "OperatingSystem"
+	static final String ORGANIZATION_KEY = "Organization"
 
 	static void main(def args) {
 
@@ -133,6 +139,17 @@ class GoldHelper {
 		}
 	}
 
+	static boolean machineExists(String machName) {
+
+		ExternalCommand gc = executeGoldCommand("glsmachine -show Name -quiet");
+
+		if (gc.getStdOut().contains(machName)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	static User getUser(String username) {
 		ExternalCommand ec = executeGoldCommand("glsuser -show Description "
 				+ username + " --quiet");
@@ -149,6 +166,34 @@ class GoldHelper {
 			+ username + "'");
 		}
 		u
+	}
+
+	static Machine getMachine(String machName) {
+		ExternalCommand ec = executeGoldCommand("glsmachine "
+				+ machName + " --raw")
+
+		if (ec.getStdOut().size() == 0) {
+			throw new MachineFault("Can't retrieve machine.", "Machine " + machName
+			+ " not in Gold database.", 404)
+		}
+
+		def map = parseGLSOutput(ec.getStdOut())
+
+		if (map.size() != 1) {
+			throw new MachineFault("Can't find unique machine with name "
+			+machName, "Machine "+machName+ "not in Gold database or multiple results found.", 404)
+		}
+
+		def machineProps = map[machName]
+		def arch = machineProps[ARCHITECTURE_KEY]
+		def opsys = machineProps[OPERATING_SYSTEM_KEY]
+		def desc = machineProps[DESCRIPTION_KEY]
+
+		Machine m = new Machine(machName)
+		m.setArch(arch)
+		m.setOpsys(opsys)
+		m.setDescription(desc)
+		m
 	}
 
 	static List<User> getAllUsers() {
@@ -173,6 +218,30 @@ class GoldHelper {
 			}
 		}
 		users
+	}
+
+	static List<Machine> getAllMachines() {
+
+		ExternalCommand ec = new ExternalCommand('glsmachine -A --raw')
+		ec.execute()
+		def map = parseGLSOutput(ec.getStdOut())
+
+		def machines = []
+		map.each { key, value ->
+			log.debug('Creating machine {}', key)
+
+			def desc = value[DESCRIPTION_KEY]
+			def arch = value[ARCHITECTURE_KEY]
+			def opsys = value[OPERATING_SYSTEM_KEY]
+
+			Machine m = new Machine(key)
+			m.setArch(arch)
+			m.setOpsys(opsys)
+			m.setDescription(desc)
+
+			machines.add(m)
+		}
+		machines
 	}
 
 	public static Project getProject(String projName) {

@@ -1,9 +1,22 @@
 package nz.org.nesi.goldwrap.utils;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import nz.org.nesi.goldwrap.domain.Machine;
+
+import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.map.AnnotationIntrospector;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.MappingJsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
+import org.codehaus.jackson.map.type.TypeFactory;
 import org.codehaus.jackson.xc.JaxbAnnotationIntrospector;
+
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 
 public class JSONHelpers {
 	private static ObjectMapper mapper = null;
@@ -52,5 +65,42 @@ public class JSONHelpers {
 
 		}
 		return mapper;
+	}
+
+	private static JsonFactory f = new MappingJsonFactory();
+
+	public static void main(String[] args) throws Exception {
+
+		List<Machine> objects = readJSONfile(new File(
+				"/home/markus/.goldwrap/machines.json"), Machine.class);
+
+		for (Machine m : objects) {
+			System.out.println(m.getName());
+		}
+
+	}
+
+	public static <T> List<T> getFromJSONCollection(String jsonString,
+			final Class<T> type) throws Exception {
+		try {
+			return getMapper().readValue(
+					jsonString,
+					TypeFactory.defaultInstance().constructCollectionType(
+							ArrayList.class, type));
+		} catch (JsonMappingException e) {
+			T m = convertFromJSONString(jsonString, type);
+			List<T> l = new ArrayList<T>();
+			l.add(m);
+			return l;
+		}
+	}
+
+	public static <T> List<T> readJSONfile(File file, Class<T> type)
+			throws Exception {
+
+		String txt = Files.toString(file, Charsets.UTF_8);
+
+		return getFromJSONCollection(txt, type);
+
 	}
 }

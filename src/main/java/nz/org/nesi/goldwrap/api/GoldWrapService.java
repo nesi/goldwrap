@@ -12,6 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Project;
 import nz.org.nesi.goldwrap.domain.User;
 import nz.org.nesi.goldwrap.errors.UserFault;
@@ -34,6 +35,26 @@ public interface GoldWrapService {
 	@Path("/projects")
 	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
 	public List<Project> getProjects();
+
+	/**
+	 * Gets a list of all the machines that are configured in Gold.
+	 * 
+	 * @return a list of all {@link Machine}s
+	 */
+	@GET
+	@Path("/machines")
+	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+	public List<Machine> getMachines();
+
+	@POST
+	@Path("/machines")
+	@Consumes({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+	public void createMachine(Machine mach);
+
+	@GET
+	@Path("/machines/{machineName}")
+	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+	public Machine getMachine(@PathParam("machineName") String machineName);
 
 	/**
 	 * Creates a {@link Project} in the Gold database
@@ -80,6 +101,23 @@ public interface GoldWrapService {
 	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
 	public Project modifyProject(@PathParam("projectName") String projName,
 			Project project);
+
+	/**
+	 * Modifies an existing Machine within Gold.
+	 * 
+	 * @param machName
+	 *            the name of the machine
+	 * @param machine
+	 *            the new details of this machine. Empty values in this will not
+	 *            delete existing values in Gold database.
+	 * @return the new machine object as it is stored in Gold
+	 */
+	@POST
+	@Path("/machines/{machineName}")
+	@Consumes({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+	public Machine modifyMachine(@PathParam("machineName") String machName,
+			Machine machine);
 
 	/**
 	 * Deletes a project.
