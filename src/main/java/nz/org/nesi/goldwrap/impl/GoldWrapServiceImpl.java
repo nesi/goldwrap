@@ -363,18 +363,23 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		String desc = JSONHelpers.convertToJSONString(user);
 
-		String command = "gmkuser ";
+		List<String> command = Lists.newArrayList("gmkuser");
 		if (StringUtils.isNotBlank(fullname)) {
-			command = command + "-n \"" + fullname + "\" ";
+			command.add("-n");
+			command.add(fullname);
 		}
 		if (StringUtils.isNotBlank(email)) {
-			command = command + "-E " + email + " ";
+			command.add("-E");
+			command.add(email);
 		}
 		if (StringUtils.isNotBlank(phone)) {
-			command = command + "-F " + phone + " ";
+			command.add("-F");
+			command.add(phone);
 		}
 
-		command = command + " -d '" + desc + "' " + username;
+		command.add("-d");
+		command.add(desc);
+		command.add(username);
 
 		ExternalCommand ec = executeGoldCommand(command);
 
