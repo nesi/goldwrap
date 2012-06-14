@@ -248,7 +248,8 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		String desc = JSONHelpers.convertToJSONString(proj);
 		desc = "{\"projectId\":\"" + projName + "\"}";
 		command.add("-d");
-		command.add("'" + desc + "'");
+		command.add(desc);
+		// command.add("'" + desc + "'");
 
 		// String users = Joiner.on(",").join(proj.getUsers());
 		//
