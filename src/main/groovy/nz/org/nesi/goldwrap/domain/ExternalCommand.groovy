@@ -8,6 +8,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 
 import nz.org.nesi.goldwrap.Config
 import nz.org.nesi.goldwrap.errors.GoldCommandException
@@ -21,7 +23,7 @@ class ExternalCommand {
 	static hasMany = [stdout : String, stderr : String]
 
 	String command
-	String[] advancedCommand
+	List<String> advancedCommand
 	int exitCode
 	List<String> stdOut
 	List<String> stdErr
@@ -36,7 +38,7 @@ class ExternalCommand {
 		this.command = command
 	}
 
-	public ExternalCommand(String[] advanced) {
+	public ExternalCommand(List<String> advanced) {
 		this.advancedCommand = advanced
 	}
 
@@ -50,10 +52,20 @@ class ExternalCommand {
 
 	public String[] advancedCommand() {
 		if ( Config.getCommandPrefix() ) {
-			return [
-				Config.getCommandPrefix(),
+			Iterable config = Splitter.on(' ').split(Config.getCommandPrefix())
+			config = Lists.newArrayList(config)
+			def last = config.last()
+			config.pop()
+			def first = advancedCommand.first()
+			def joined = last+first
+			advancedCommand.remove(0)
+
+			def result = [
+				config,
+				joined,
 				advancedCommand
 			].flatten()
+			return result
 		} else {
 			return advancedCommand
 		}
@@ -99,7 +111,9 @@ class ExternalCommand {
 			proc = command().execute()
 		} else {
 			log.debug("Executing advanced command...")
-			ProcessBuilder procBuilder = new ProcessBuilder(advancedCommand())
+			def ac = advancedCommand()
+			log.debug('\n\n'+Joiner.on('\n').join(ac.iterator())+'\n\n')
+			ProcessBuilder procBuilder = new ProcessBuilder(ac)
 			proc = procBuilder.start()
 		}
 		proc.waitFor()

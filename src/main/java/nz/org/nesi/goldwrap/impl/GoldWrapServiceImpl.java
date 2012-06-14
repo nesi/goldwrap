@@ -47,7 +47,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		return gc;
 	}
 
-	private static ExternalCommand executeGoldCommand(String[] command) {
+	private static ExternalCommand executeGoldCommand(List<String> command) {
 		ExternalCommand gc = new ExternalCommand(command);
 		gc.execute();
 		gc.verify();
@@ -245,7 +245,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		String desc = JSONHelpers.convertToJSONString(proj);
 		command.add("-d");
-		command.add(desc);
+		command.add("'" + desc + "'");
 
 		// String users = Joiner.on(",").join(proj.getUsers());
 		//
@@ -265,8 +265,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		command.add(projName);
 
-		ExternalCommand ec = executeGoldCommand(command
-				.toArray(new String[] {}));
+		ExternalCommand ec = executeGoldCommand(command);
 
 		if (!GoldHelper.projectExists(projName)) {
 			throw new ProjectFault(proj, "Can't create project.",
