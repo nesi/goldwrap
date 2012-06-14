@@ -246,7 +246,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		proj.setAllocations(new ArrayList<Allocation>());
 
 		String desc = JSONHelpers.convertToJSONString(proj);
-		desc = "'{\"projectId\":\"" + projName + "\"'}";
+		desc = "{\"projectId\":\"" + projName + "\"}";
 		command.add("-d");
 		command.add("'" + desc + "'");
 
