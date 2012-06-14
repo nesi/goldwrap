@@ -27,7 +27,17 @@ import nz.org.nesi.goldwrap.errors.UserFault;
 public interface GoldWrapService {
 
 	/**
-	 * Creates a {@link Project} in the Gold database
+	 * Creates a {@link Project} in the Gold database.
+	 * 
+	 * You can specify a list of {@link User} objects within the project
+	 * description. Every user needs to have at least the
+	 * {@link User#getUserId()} property set, otherwise this method will fail.
+	 * If the user already exists it will be updated with (optional) additional
+	 * fields within the user object, if not, the user will be created in Gold.
+	 * 
+	 * In addition, an account will be automatically created in Gold (account
+	 * name: project name prefixed with acc_) and linked to this project and the
+	 * users of this project.
 	 * 
 	 * @param projName
 	 *            the name of the new project
@@ -107,6 +117,9 @@ public interface GoldWrapService {
 
 	/**
 	 * Adds a user to this project.
+	 * 
+	 * The user will also be added to the account that is associated with this
+	 * project.
 	 * 
 	 * @param projName
 	 *            the name of the project
