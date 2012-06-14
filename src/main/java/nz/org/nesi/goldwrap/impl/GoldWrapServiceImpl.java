@@ -529,11 +529,12 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		// we don't want to store userdata in the description
 		goldProject.setUsers(new ArrayList<User>());
 
-		StringBuffer command = new StringBuffer("gchproject ");
+		List<String> command = Lists.newArrayList("gchproject");
 		String desc = JSONHelpers.convertToJSONString(goldProject);
-		command.append("-d '" + desc + "' ");
+		command.add("-d");
+		command.add(desc);
 
-		command.append(projName);
+		command.add(projName);
 
 		ExternalCommand ec = executeGoldCommand(command.toString());
 
