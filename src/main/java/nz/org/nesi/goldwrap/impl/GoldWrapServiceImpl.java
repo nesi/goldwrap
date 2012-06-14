@@ -585,22 +585,25 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		String newOs = machine.getOpsys();
 		String newDesc = machine.getDescription();
 
-		StringBuffer command = new StringBuffer("gchmachine ");
+		List<String> command = Lists.newArrayList("gchmachine");
 		if (StringUtils.isNotBlank(newDesc)) {
-			command.append("-d '" + newDesc + "' ");
+			command.add("-d");
+			command.add(newDesc);
 		}
 
 		if (StringUtils.isNotBlank(newArch)) {
-			command.append("--arch '" + newArch + "' ");
+			command.add("--arch");
+			command.add(newArch);
 		}
 
 		if (StringUtils.isNotBlank(newOs)) {
-			command.append("--opsys '" + newOs + "' ");
+			command.add("--opsys");
+			command.add(newOs);
 		}
 
-		command.append(machName);
+		command.add(machName);
 
-		ExternalCommand ec = executeGoldCommand(command.toString());
+		ExternalCommand ec = executeGoldCommand(command);
 
 		return getMachine(machName);
 
