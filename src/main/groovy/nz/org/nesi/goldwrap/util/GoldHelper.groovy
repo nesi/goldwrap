@@ -82,7 +82,15 @@ class GoldHelper {
 		ec.execute()
 
 		Project p = getProject(projName)
-		if (! p.getUsers().contains(user)) {
+
+		User tmp = p.getUsers().findResult { it ->
+			if ( it.getUserId().equals(user) ) {
+				return it
+			}
+		}
+
+
+		if (! tmp) {
 			throw new ProjectFault(p, "Could not add user "+user+" to project "+projName, "Unknown reason.", 500);
 		}
 		p
@@ -279,7 +287,19 @@ class GoldHelper {
 		}
 
 		def users = value[USERS].split (',') as List
-		proj.setUsers(users)
+
+		def result = []
+		users.each { it ->
+			try {
+				User u = getUser(it)
+				result.add(u)
+			}  catch (all) {
+				UserFault f = new UserFault("Can't load user '"+it+"'.", "Error retrieving user '"+it+"' from Gold.", 500)
+				f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
+				throw f
+			}
+		}
+		proj.setUsers(result)
 
 
 		return proj
@@ -303,19 +323,6 @@ class GoldHelper {
 
 		def proj = getProject(projName)
 
-		def result = []
-		proj.getUsers().each { it ->
-			try {
-				User u = getUser(it)
-				System.out.println("USER: "+u)
-				result.add(u)
-			}  catch (all) {
-				UserFault f = new UserFault("Can't load user '"+it+"'.", "Error retrieving user '"+it+"' from Gold.", 500)
-				f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
-				throw f
-			}
-		}
-
-		result
+		proj.getUsers()
 	}
 }

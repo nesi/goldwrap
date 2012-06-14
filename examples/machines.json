@@ -1,0 +1,8 @@
+[
+{
+    "name":"fitzroy",
+    "arch":"POWER6",
+    "opsys":"AIX",
+    "description":"HPCF Supercomputer"
+}
+]

@@ -15,13 +15,13 @@ import org.apache.commons.lang3.StringUtils;
 @XmlRootElement
 public class Machine {
 
-	private String name;
+	private String name = "";
 
-	private String arch;
+	private String arch = "";
 
-	private String opsys;
+	private String opsys = "";
 
-	private String description;
+	private String description = "";
 
 	public Machine() {
 

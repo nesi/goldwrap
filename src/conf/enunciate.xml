@@ -9,7 +9,15 @@
 <!--    	<webapp mergeWebXML="mergeWeb.xml"> -->
 <!-- 	</webapp>    -->
    <modules>
+		<csharp disabled="true" />
       <!-- Docs -->
       <docs splashPackage="nz.org.nesi.api" title="goldwrap" copyright="nesi.org.nz" groupRestResources="byPath"/>
+      			<download name="Example init file" file="examples/init.config"
+				description="Example init file to be placed in either /etc/goldwrap or $HOME/.goldwrap. The commands contained in it will be executed at startup." />
+			<download name="Example machine.json file" file="examples/machine.json"
+				description="Example file for a list of static resources to be created/modified on every goldwrap startup." />
+
+
+
    </modules>
 </enunciate>

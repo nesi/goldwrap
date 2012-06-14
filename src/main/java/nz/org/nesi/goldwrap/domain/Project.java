@@ -18,17 +18,14 @@ import org.apache.commons.lang3.StringUtils;
 @XmlRootElement
 public class Project {
 
-	private String projectId;
-	private List<String> users;
-
-	private String projectClass;
-	private int allocation;
-	private int rechargeMonths;
-	private int recharge;
-	private int startMonth;
-	private int startYear;
-	private String site;
-	private String projectData;
+	private String projectId = "";
+	private String projectTitle = "";
+	private List<User> users;
+	private List<Allocation> allocations;
+	private String projectHistory = "";
+	private String principal = "";
+	private Boolean funded = false;
+	private Long timestamp = -1L;
 
 	public Project() {
 	}
@@ -38,24 +35,26 @@ public class Project {
 	}
 
 	/**
-	 * The allocation for this project.
+	 * The allocations for this project.
 	 */
-	public int getAllocation() {
-		return allocation;
+	public List<Allocation> getAllocations() {
+		return allocations;
 	}
 
 	/**
-	 * No idea what that is.
+	 * The username of the principal investigator - this is the Tuakiri hash.
+	 * 
+	 * @return the pi username
 	 */
-	public String getProjectClass() {
-		return projectClass;
+	public String getPrincipal() {
+		return principal;
 	}
 
 	/**
 	 * Other data, to be changed later on.
 	 */
-	public String getProjectData() {
-		return projectData;
+	public String getProjectHistory() {
+		return projectHistory;
 	}
 
 	/**
@@ -65,89 +64,64 @@ public class Project {
 		return projectId;
 	}
 
-	/**
-	 * No idea whatsoever.
-	 */
-	public int getRecharge() {
-		return recharge;
+	public String getProjectTitle() {
+		return projectTitle;
 	}
 
 	/**
-	 * I have no clue.
+	 * Not sure what that is for...
+	 * 
+	 * @return the timestamp
 	 */
-	public int getRechargeMonths() {
-		return rechargeMonths;
-	}
-
-	/**
-	 * The site where this project will be run.
-	 */
-	public String getSite() {
-		return site;
-	}
-
-	/**
-	 * The start month of this project.
-	 */
-	public int getStartMonth() {
-		return startMonth;
-	}
-
-	/**
-	 * The start year of this project.
-	 */
-	public int getStartYear() {
-		return startYear;
+	public Long getTimestamp() {
+		return timestamp;
 	}
 
 	/**
 	 * A list of userIds for users who are members of this project.
 	 */
-	public List<String> getUsers() {
+	public List<User> getUsers() {
 		return users;
 	}
 
-	public void setAllocation(int allocation) {
-		this.allocation = allocation;
+	/**
+	 * Whether this project is funded or not (defaults to: False).
+	 * 
+	 * @return whether funded or not
+	 */
+	public Boolean isFunded() {
+		return funded;
 	}
 
-	public void setName(String name) {
-		this.projectId = name;
+	public void setAllocations(List<Allocation> allocations) {
+		this.allocations = allocations;
 	}
 
-	public void setProjectClass(String projectClass) {
-		this.projectClass = projectClass;
+	public void setFunded(Boolean funded) {
+		this.funded = funded;
 	}
 
-	public void setProjectData(String projectData) {
-		this.projectData = projectData;
+	public void setPrincipal(String principal) {
+		this.principal = principal;
+	}
+
+	public void setProjectHistory(String projectData) {
+		this.projectHistory = projectData;
 	}
 
 	public void setProjectId(String projectId) {
 		this.projectId = projectId;
 	}
 
-	public void setRecharge(int recharge) {
-		this.recharge = recharge;
+	public void setProjectTitle(String projectTitle) {
+		this.projectTitle = projectTitle;
 	}
 
-	public void setRechargeMonths(int rechargeMonths) {
-		this.rechargeMonths = rechargeMonths;
+	public void setTimestamp(Long timestamp) {
+		this.timestamp = timestamp;
 	}
 
-	public void setSite(String site) {
-		this.site = site;
-	}
-
-	public void setStartMonth(int startMonth) {
-		this.startMonth = startMonth;
-	}
-
-	public void setStartYear(int startYear) {
-		this.startYear = startYear;
-	}
-
-	public void setUsers(List<String> users) {
+	public void setUsers(List<User> users) {
 		this.users = users;
 	}
 
@@ -161,41 +135,6 @@ public class Project {
 		if (!fullCheck) {
 			return;
 		}
-
-		if (StringUtils.isBlank(getProjectClass())) {
-			throw new ProjectFault(this, "Invalid project.",
-					"Project class can't be blank.");
-		}
-
-		if (StringUtils.isBlank(getSite())) {
-			throw new ProjectFault(this, "Invalid project.",
-					"Project site can't be blank.");
-		}
-
-		// if (getAllocation() == null) {
-		// throw new ProjectFault(this, "Invalid project.",
-		// "Project allocation can't be blank.");
-		// }
-		//
-		// if (getRechargeMonths() == null) {
-		// throw new ProjectFault(this, "Invalid project.",
-		// "Project rechargeMonths can't be blank.");
-		// }
-		//
-		// if (getRecharge() == null) {
-		// throw new ProjectFault(this, "Invalid project.",
-		// "Project recharge can't be blank.");
-		// }
-		//
-		// if (getStartMonth() == null) {
-		// throw new ProjectFault(this, "Invalid project.",
-		// "Project startMonth can't be blank.");
-		// }
-		//
-		// if (getStartYear() == null) {
-		// throw new ProjectFault(this, "Invalid project.",
-		// "Project startYear can't be blank.");
-		// }
 
 	}
 }
