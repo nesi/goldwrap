@@ -48,6 +48,24 @@ public class Config {
 		return config;
 	}
 
+	public boolean debugEnabled() {
+		boolean enabled = false;
+
+		try {
+			try {
+				enabled = getServerConfiguration().getBoolean("debug");
+
+			} catch (final NoSuchElementException e) {
+				// doesn't matter
+				// myLogger.debug(e.getLocalizedMessage(), e);
+			}
+
+		} catch (final ConfigurationException e) {
+			myLogger.debug(e.getLocalizedMessage());
+		}
+		return enabled;
+	}
+
 	public static String getCommandPrefix() {
 		String prefix = "";
 

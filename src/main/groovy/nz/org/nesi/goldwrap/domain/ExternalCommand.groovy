@@ -7,6 +7,8 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.google.common.base.Joiner;
+
 import nz.org.nesi.goldwrap.Config
 import nz.org.nesi.goldwrap.errors.GoldCommandException
 
@@ -95,6 +97,11 @@ class ExternalCommand {
 			}
 			setStdOut(stdout)
 			setStdErr(stderr)
+		}
+
+		if ( Config.debugEnabled() ) {
+			log.debug("STDOUT:\n\n"+Joiner.on('\n').join(stdout.iterator()))
+			log.debug("\nSTDERR:\n\n"+Joiner.on('\n').join(stderr.iterator()))
 		}
 
 		log.debug("Executed: "+command())
