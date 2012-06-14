@@ -2,6 +2,7 @@ package nz.org.nesi.goldwrap.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.jws.WebService;
@@ -232,7 +233,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 
 		StringBuffer command = new StringBuffer("gmkproject ");
-		proj.setUsers(null);
+		proj.setUsers(new ArrayList<User>());
 
 		String desc = JSONHelpers.convertToJSONString(proj);
 		command.append("-d '" + desc + "' ");
@@ -511,7 +512,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 
 		// we don't want to store userdata in the description
-		goldProject.setUsers(null);
+		goldProject.setUsers(new ArrayList<User>());
 
 		StringBuffer command = new StringBuffer("gchproject ");
 		String desc = JSONHelpers.convertToJSONString(goldProject);
