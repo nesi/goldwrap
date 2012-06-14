@@ -63,29 +63,31 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 				myLogger.debug("Running init commands...");
 				File initFile = new File(configDir, "init.config");
 
-				List<String> lines = null;
-				try {
-					lines = Files.readLines(initFile, Charsets.UTF_8);
-				} catch (IOException e1) {
-					throw new RuntimeException("Can't read file: "
-							+ initFile.toString());
-				}
-
-				for (String line : lines) {
-					line = line.trim();
-					if (StringUtils.isEmpty(line) || line.startsWith("#")) {
-						continue;
+				if (initFile.exists()) {
+					List<String> lines = null;
+					try {
+						lines = Files.readLines(initFile, Charsets.UTF_8);
+					} catch (IOException e1) {
+						throw new RuntimeException("Can't read file: "
+								+ initFile.toString());
 					}
-					myLogger.debug("Executing: " + line);
-					ExternalCommand ec = executeGoldCommand(line);
 
-					myLogger.debug("StdOut:\n\n{}\n\n",
-							Joiner.on("\n").join(ec.getStdOut()));
-					myLogger.debug("StdErr:\n\n{}\n\n",
-							Joiner.on("\n").join(ec.getStdErr()));
+					for (String line : lines) {
+						line = line.trim();
+						if (StringUtils.isEmpty(line) || line.startsWith("#")) {
+							continue;
+						}
+						myLogger.debug("Executing: " + line);
+						ExternalCommand ec = executeGoldCommand(line);
+
+						myLogger.debug("StdOut:\n\n{}\n\n", Joiner.on("\n")
+								.join(ec.getStdOut()));
+						myLogger.debug("StdErr:\n\n{}\n\n", Joiner.on("\n")
+								.join(ec.getStdErr()));
+
+					}
 
 				}
-
 				myLogger.debug("Trying to initialize static values...");
 
 				File machinesFile = new File(configDir, "machines.json");
