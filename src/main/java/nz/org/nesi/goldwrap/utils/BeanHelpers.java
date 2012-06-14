@@ -21,22 +21,23 @@ public class BeanHelpers {
 		for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
 
 			// Only copy writable attributes
-			if (descriptor.getWriteMethod() != null) {
+			if (descriptor.getWriteMethod() != null
+					&& descriptor.getReadMethod() != null) {
 				Object newValue = descriptor.getReadMethod().invoke(
 						propertiesToMerge);
 
 				// Only copy values values where the destination values is null
 				if (newValue != null) {
-					if (original instanceof String) {
+					if (newValue instanceof String) {
 						if (StringUtils.isBlank((String) newValue)) {
 							continue;
 						}
-					} else if (original instanceof Integer) {
-						if ((Integer) original < 0) {
+					} else if (newValue instanceof Integer) {
+						if ((Integer) newValue < 0) {
 							continue;
 						}
-					} else if (original instanceof Long) {
-						if ((Long) original < 0) {
+					} else if (newValue instanceof Long) {
+						if ((Long) newValue < 0) {
 							continue;
 						}
 					}

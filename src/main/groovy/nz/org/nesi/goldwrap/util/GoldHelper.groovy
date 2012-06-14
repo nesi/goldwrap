@@ -11,10 +11,12 @@ import groovy.util.logging.Slf4j
 import com.google.common.base.Splitter
 import com.google.common.collect.Lists
 
+import nz.org.nesi.goldwrap.domain.Account
 import nz.org.nesi.goldwrap.domain.ExternalCommand
 import nz.org.nesi.goldwrap.domain.Machine
 import nz.org.nesi.goldwrap.domain.Project
 import nz.org.nesi.goldwrap.domain.User
+import nz.org.nesi.goldwrap.errors.AccountFault
 import nz.org.nesi.goldwrap.errors.MachineFault
 import nz.org.nesi.goldwrap.errors.ProjectFault;
 import nz.org.nesi.goldwrap.errors.ServiceException;
@@ -24,12 +26,7 @@ import nz.org.nesi.goldwrap.utils.JSONHelpers
 @Slf4j
 class GoldHelper {
 
-	private static ExternalCommand executeGoldCommand(String command) {
-		ExternalCommand gc = new ExternalCommand(command);
-		gc.execute();
-		gc.verify();
-		return gc;
-	}
+	static final String ANY_KEY = "ANY"
 
 	static final String NAME_KEY = "Name"
 	static final String DESCRIPTION_KEY = "Description"
@@ -38,38 +35,10 @@ class GoldHelper {
 	static final String ARCHITECTURE_KEY = "Architecture"
 	static final String OPERATING_SYSTEM_KEY = "OperatingSystem"
 	static final String ORGANIZATION_KEY = "Organization"
-
-	static void main(def args) {
-
-		ExternalCommand ec = new ExternalCommand('glsuser -A --raw')
-		ec.execute()
-		println getAllUsers()
-	}
-
-	static def parseGLSOutput(def output) {
-
-		output = output.findAll {
-			( ! it.trim().startsWith("-") ) && ! (it.trim().startsWith("root") )
-		}
-
-		def keyList = Lists.newArrayList(
-				Splitter.on('|').trimResults().split(output.get(0)))
-		output.remove(0)
-
-		def result = [:]
-
-		for ( def line : output ) {
-			List tokens = Lists.newArrayList(
-					Splitter.on('|').trimResults().split(line))
-
-			def map = [keyList, tokens].transpose().collectEntries{ it }
-			def name = map.get(NAME_KEY)
-			if ( name ) {
-				result[map.get(NAME_KEY)] = map
-			}
-		}
-		result
-	}
+	static final String ID_KEY = "Id"
+	static final String AMOUNT_KEY = "Amount"
+	static final String PROJECTS_KEY = "Projects"
+	static final String MACHINES_KEY = "Machines"
 
 	static Project addUserToProject(String projName, String user) {
 
@@ -78,6 +47,7 @@ class GoldHelper {
 			+ " not in Gold database.", 404);
 		}
 
+		log.debug("Adding user "+user+" to project "+projName)
 		ExternalCommand ec = new ExternalCommand('gchproject --addUser '+user+ " "+projName)
 		ec.execute()
 
@@ -89,11 +59,62 @@ class GoldHelper {
 			}
 		}
 
-
 		if (! tmp) {
 			throw new ProjectFault(p, "Could not add user "+user+" to project "+projName, "Unknown reason.", 500);
 		}
-		p
+
+		int accNr = p.getAccountId()
+		if ( ! accNr || accNr <= 0 ) {
+			throw new ProjectFault(p, "Could not find account number for project "+projName)
+		}
+		log.debug("Adding user "+user+" to account "+accNr)
+
+		ExternalCommand ec2 = new ExternalCommand('gchaccount --addUser '+user+' '+accNr)
+		ec2.execute()
+
+		// checking whether user was added to account
+		Account acc = getAccount(accNr)
+
+		User tmp2 = acc.getUsers().findResult { it ->
+			if ( it.getUserId().equals(user) ) {
+				return it
+			}
+		}
+
+		if (! tmp2) {
+			throw new ProjectFault(p, "Could not add user "+user+" to account "+accNr, "Unknown reason.", 500);
+		}
+
+	}
+	private static ExternalCommand executeGoldCommand(String command) {
+		ExternalCommand gc = new ExternalCommand(command);
+		gc.execute();
+		gc.verify();
+		return gc;
+	}
+
+	static List<Machine> getAllMachines() {
+
+		ExternalCommand ec = new ExternalCommand('glsmachine -A --raw')
+		ec.execute()
+		def map = parseGLSOutput(ec.getStdOut())
+
+		def machines = []
+		map.each { key, value ->
+			log.debug('Creating machine {}', key)
+
+			def desc = value[DESCRIPTION_KEY]
+			def arch = value[ARCHITECTURE_KEY]
+			def opsys = value[OPERATING_SYSTEM_KEY]
+
+			Machine m = new Machine(key)
+			m.setArch(arch)
+			m.setOpsys(opsys)
+			m.setDescription(desc)
+
+			machines.add(m)
+		}
+		machines
 	}
 
 	static List<Project> getAllProjects() {
@@ -125,55 +146,28 @@ class GoldHelper {
 		projects
 	}
 
-	static boolean isRegistered(String username) {
+	static List<User> getAllUsers() {
 
-		ExternalCommand gc = executeGoldCommand("glsuser -show Name -quiet");
+		ExternalCommand ec = new ExternalCommand('glsuser -A --raw')
+		ec.execute()
+		def map = parseGLSOutput(ec.getStdOut())
 
-		if (gc.getStdOut().contains(username)) {
-			return true;
-		} else {
-			return false;
+		def users = []
+		map.each { key, value ->
+			log.debug('Creating user {}', key)
+			def desc = value[DESCRIPTION_KEY]
+			if ( ! desc ) {
+				log.debug('Ignoring user {}', key)
+			} else {
+				try {
+					User u = JSONHelpers.convertFromJSONString(desc, User.class)
+					users.add(u)
+				} catch (all) {
+					log.error ('Could not import user {}: {}', key, all)
+				}
+			}
 		}
-	}
-
-	static boolean projectExists(String projName) {
-
-		ExternalCommand gc = executeGoldCommand("glsproject -show Name -quiet");
-
-		if (gc.getStdOut().contains(projName)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	static boolean machineExists(String machName) {
-
-		ExternalCommand gc = executeGoldCommand("glsmachine -show Name -quiet");
-
-		if (gc.getStdOut().contains(machName)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	static User getUser(String username) {
-		ExternalCommand ec = executeGoldCommand("glsuser -show Description "
-				+ username + " --quiet");
-
-		if (ec.getStdOut().size() == 0) {
-			throw new UserFault("Can't retrieve user.", "User " + username
-			+ " not in Gold database.", 404);
-		}
-
-		User u = JSONHelpers.extractObject(User.class, ec.getStdOut().get(0));
-		if (!username.equals(u.getUserId())) {
-			throw new ServiceException("Internal error",
-			"Gold userId and userId in description don't match for user '"
-			+ username + "'");
-		}
-		u
+		users
 	}
 
 	static Machine getMachine(String machName) {
@@ -204,52 +198,75 @@ class GoldHelper {
 		m
 	}
 
-	static List<User> getAllUsers() {
+	public static Account getAccount(Integer accountId) {
 
-		ExternalCommand ec = new ExternalCommand('glsuser -A --raw')
+		if (! accountExists(accountId)) {
+			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404);
+		}
+
+		ExternalCommand ec = new ExternalCommand('glsaccount -A --raw '+accountId)
 		ec.execute()
 		def map = parseGLSOutput(ec.getStdOut())
 
-		def users = []
-		map.each { key, value ->
-			log.debug('Creating user {}', key)
-			def desc = value[DESCRIPTION_KEY]
-			if ( ! desc ) {
-				log.debug('Ignoring user {}', key)
-			} else {
+		if ( map.size() == 0 ) {
+			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404);
+		}
+
+		if ( map.size() > 1 ) {
+			throw new ProjectFault("Multiple accounts with id " + accountId + " found.", "Internal error", 500);
+		}
+
+		String key = map.keySet().iterator().next()
+		Map value = map.values().iterator().next()
+
+		log.debug('Creating account {}', key)
+
+		Account acc = new Account(accountId);
+
+		def usersString = value[USERS]
+		def users = usersString.split (',') as List
+
+		def result = []
+		if ( users.contains(ANY_KEY)) {
+			result = getAllUsers()
+		} else {
+
+			users.each { it ->
 				try {
-					User u = JSONHelpers.convertFromJSONString(desc, User.class)
-					users.add(u)
-				} catch (all) {
-					log.error ('Could not import user {}: {}', key, all)
+					User u = getUser(it)
+					result.add(u)
+				}  catch (all) {
+					UserFault f = new UserFault("Can't load user '"+it+"'.", "Error retrieving user '"+it+"' from Gold.", 500)
+					f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
+					throw f
 				}
 			}
 		}
-		users
-	}
+		acc.setUsers(result)
 
-	static List<Machine> getAllMachines() {
-
-		ExternalCommand ec = new ExternalCommand('glsmachine -A --raw')
-		ec.execute()
-		def map = parseGLSOutput(ec.getStdOut())
-
-		def machines = []
-		map.each { key, value ->
-			log.debug('Creating machine {}', key)
-
-			def desc = value[DESCRIPTION_KEY]
-			def arch = value[ARCHITECTURE_KEY]
-			def opsys = value[OPERATING_SYSTEM_KEY]
-
-			Machine m = new Machine(key)
-			m.setArch(arch)
-			m.setOpsys(opsys)
-			m.setDescription(desc)
-
-			machines.add(m)
+		def resultP = []
+		def projectsString = value[PROJECTS_KEY]
+		def projects = projectsString.split (',') as List
+		if ( projects.contains(ANY_KEY)) {
+			resultP = getAllProjects()
+		} else {
+			projects.each { it ->
+				try {
+					Project p = getProject(it)
+					resultP.add(p)
+				}  catch (all) {
+					ProjectFault f = new ProjectFault("Can't load project '"+it+"'.", "Error retrieving project '"+it+"' from Gold.", 500)
+					f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
+					throw f
+				}
+			}
 		}
-		machines
+		acc.setProjects(resultP)
+
+
+		def desc = value[DESCRIPTION_KEY]
+		acc.setDescription(desc)
+		return acc
 	}
 
 	public static Project getProject(String projName) {
@@ -283,24 +300,29 @@ class GoldHelper {
 		try {
 			proj = JSONHelpers.convertFromJSONString(desc, Project.class)
 		} catch (all) {
+			all.printStackTrace();
 			throw new ProjectFault("Can't create project "+key+".", "Can't read description field for project "+key, 500)
 		}
 
-		def users = value[USERS].split (',') as List
-
-		def result = []
-		users.each { it ->
-			try {
-				User u = getUser(it)
-				result.add(u)
-			}  catch (all) {
-				UserFault f = new UserFault("Can't load user '"+it+"'.", "Error retrieving user '"+it+"' from Gold.", 500)
-				f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
-				throw f
+		String usersString = value[USERS]
+		if ( usersString) {
+			usersString = usersString.trim()
+			def users = usersString.split (',') as List
+			if ( users ) {
+				def result = []
+				users.each { it ->
+					try {
+						User u = getUser(it)
+						result.add(u)
+					}  catch (all) {
+						UserFault f = new UserFault("Can't load user '"+it+"'.", "Error retrieving user '"+it+"' from Gold.", 500)
+						f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
+						throw f
+					}
+				}
+				proj.setUsers(result)
 			}
 		}
-		proj.setUsers(result)
-
 
 		return proj
 	}
@@ -319,10 +341,103 @@ class GoldHelper {
 		return projects
 	}
 
+	static User getUser(String username) {
+		ExternalCommand ec = executeGoldCommand("glsuser -show Description "
+				+ username + " --quiet");
+
+		if (ec.getStdOut().size() == 0) {
+			throw new UserFault("Can't retrieve user.", "User " + username
+			+ " not in Gold database.", 404);
+		}
+
+		User u = JSONHelpers.extractObject(User.class, ec.getStdOut().get(0));
+		if (!username.equals(u.getUserId())) {
+			throw new ServiceException("Internal error",
+			"Gold userId and userId in description don't match for user '"
+			+ username + "'");
+		}
+		u
+	}
+
 	public static List<User> getUsersForProject(String projName) {
 
 		def proj = getProject(projName)
 
 		proj.getUsers()
+	}
+
+	static boolean isRegistered(String username) {
+
+		ExternalCommand gc = executeGoldCommand("glsuser -show Name -quiet");
+
+		if (gc.getStdOut().contains(username)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	static boolean machineExists(String machName) {
+
+		ExternalCommand gc = executeGoldCommand("glsmachine -show Name -quiet");
+
+		if (gc.getStdOut().contains(machName)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	static void main(def args) {
+
+		ExternalCommand ec = new ExternalCommand('glsuser -A --raw')
+		ec.execute()
+		println getAllUsers()
+	}
+
+	static def parseGLSOutput(def output) {
+
+		output = output.findAll {
+			( ! it.trim().startsWith("-") ) && ! (it.trim().startsWith("root") )
+		}
+
+		def keyList = Lists.newArrayList(
+				Splitter.on('|').trimResults().split(output.get(0)))
+		output.remove(0)
+
+		def result = [:]
+
+		for ( def line : output ) {
+			List tokens = Lists.newArrayList(
+					Splitter.on('|').trimResults().split(line))
+
+			def map = [keyList, tokens].transpose().collectEntries{ it }
+			def name = map.get(NAME_KEY)
+			if ( name ) {
+				result[map.get(NAME_KEY)] = map
+			}
+		}
+		result
+	}
+
+	static boolean accountExists(Integer accountId) {
+		ExternalCommand gc = executeGoldCommand("glsaccount -show Id -quiet");
+
+		if (gc.getStdOut().contains(accountId.toString())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	static boolean projectExists(String projName) {
+
+		ExternalCommand gc = executeGoldCommand("glsproject -show Name -quiet");
+
+		if (gc.getStdOut().contains(projName)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

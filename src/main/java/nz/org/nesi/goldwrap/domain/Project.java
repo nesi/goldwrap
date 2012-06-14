@@ -8,6 +8,8 @@ import nz.org.nesi.goldwrap.errors.ProjectFault;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.google.common.collect.Lists;
+
 /**
  * The model that contains all project specific properties.
  * 
@@ -20,18 +22,24 @@ public class Project {
 
 	private String projectId = "";
 	private String projectTitle = "";
-	private List<User> users;
-	private List<Allocation> allocations;
+	private List<User> users = Lists.newArrayList();
+	private List<Allocation> allocations = Lists.newArrayList();
 	private String projectHistory = "";
 	private String principal = "";
 	private Boolean funded = false;
 	private Long timestamp = -1L;
+
+	private Integer accountId = -1;
 
 	public Project() {
 	}
 
 	public Project(String name) {
 		this.projectId = name;
+	}
+
+	public Integer getAccountId() {
+		return accountId;
 	}
 
 	/**
@@ -91,6 +99,10 @@ public class Project {
 	 */
 	public Boolean isFunded() {
 		return funded;
+	}
+
+	public void setAccountId(Integer accountId) {
+		this.accountId = accountId;
 	}
 
 	public void setAllocations(List<Allocation> allocations) {

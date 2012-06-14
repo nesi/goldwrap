@@ -2,22 +2,22 @@ package nz.org.nesi.goldwrap.errors;
 
 import javax.xml.ws.WebFault;
 
-import nz.org.nesi.goldwrap.domain.Allocation;
+import nz.org.nesi.goldwrap.domain.Account;
 
 /**
- * Thrown when something machine related is not correct (machinename not valid,
- * machine not found...)
+ * Thrown when something account related is not correct (accountId not valid,
+ * account not found...)
  * 
  * @author markus
  * 
  */
-@WebFault(name = "AllocationFault")
-public class AllocationFault extends ServiceException {
+@WebFault(name = "AccountFault")
+public class AccountFault extends ServiceException {
 
 	private static final long serialVersionUID = 1L;
 	private static final Integer ERROR_CODE = 400;
 
-	public AllocationFault(Allocation all, String message, String reason) {
+	public AccountFault(Account all, String message, String reason) {
 		super(message, new FaultInfo());
 		getFaultInfo().setErrorCode(ERROR_CODE);
 		getFaultInfo().setReason(reason);
@@ -25,22 +25,22 @@ public class AllocationFault extends ServiceException {
 
 	}
 
-	public AllocationFault(String message, FaultInfo faultInfo) {
+	public AccountFault(String message, FaultInfo faultInfo) {
 		super(message, faultInfo);
 	}
 
-	public AllocationFault(String message, FaultInfo faultInfo, Throwable cause) {
+	public AccountFault(String message, FaultInfo faultInfo, Throwable cause) {
 		super(message, faultInfo, cause);
 	}
 
-	public AllocationFault(String message, String reason, Integer errorCode) {
+	public AccountFault(String message, String reason, Integer errorCode) {
 		super(message, new FaultInfo());
 		getFaultInfo().setErrorCode(errorCode);
 		getFaultInfo().setReason(reason);
 
 	}
 
-	public AllocationFault(Allocation a, String message, String reason,
+	public AccountFault(Account a, String message, String reason,
 			Integer errorCode) {
 		super(message, new FaultInfo());
 		getFaultInfo().setErrorCode(errorCode);

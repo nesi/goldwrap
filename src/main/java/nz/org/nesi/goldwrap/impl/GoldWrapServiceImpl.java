@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
@@ -206,7 +208,12 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			}
 		}
 
-		List<User> users = Lists.newArrayList(proj.getUsers());
+		List<User> users = proj.getUsers();
+		if (users != null) {
+			users = Lists.newArrayList(users);
+		} else {
+			users = Lists.newArrayList();
+		}
 
 		for (User user : users) {
 			String userId = user.getUserId();
@@ -253,9 +260,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		myLogger.debug("Creating account...");
 		String command2 = "gmkaccount ";
-		// if (StringUtils.isNotBlank(users)) {
-		// command2 = command2 + "-u " + users + " ";
-		// }
+
 		command2 = command2 + "-p " + projName + " ";
 		command2 = command2 + "-n " + "acc_" + projName;
 		ExternalCommand ec2 = executeGoldCommand(command2);
@@ -271,6 +276,29 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			}
 			throw new ProjectFault(proj, "Could not create project.",
 					"Could not create associated account for some reason.");
+		}
+		myLogger.debug("Parsing output to find out account number.");
+		try {
+			String stdout = ec2.getStdOut().get(0);
+			Iterable<String> tokens = Splitter.on(' ').split(stdout);
+			Integer accNr = Integer.parseInt(Iterables.getLast(tokens));
+			Project tempProj = new Project(projName);
+			tempProj.setAccountId(accNr);
+			// remove ANY user
+			myLogger.debug("Removeing ANY user from account {}", accNr);
+			String removeAnyCommand = "gchaccount --delUsers ANY " + accNr;
+			ExternalCommand removeCommand = executeGoldCommand(removeAnyCommand);
+			modifyProject(projName, tempProj);
+		} catch (Exception e) {
+			try {
+				myLogger.debug("Trying to delete project {}...", projName);
+				deleteProject(projName);
+			} catch (Exception e2) {
+				myLogger.debug("Deleting project failed: {}",
+						e2.getLocalizedMessage());
+			}
+			throw new ProjectFault(proj, "Could not create project.",
+					"Could not parse account nr for project.");
 		}
 
 		myLogger.debug("Account created. Now adding users...");
@@ -453,7 +481,12 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			}
 		}
 
-		List<User> users = Lists.newArrayList(project.getUsers());
+		List<User> users = project.getUsers();
+		if (users != null) {
+			users = Lists.newArrayList(users);
+		} else {
+			users = Lists.newArrayList();
+		}
 
 		for (User user : users) {
 			String userId = user.getUserId();
@@ -466,11 +499,20 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		project.validate(false);
 
+		Project goldProject = getProject(projName);
+		try {
+			BeanHelpers.merge(goldProject, project);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new ProjectFault(project, "Can't modify project " + projName,
+					"Can't merge new properties: " + e.getLocalizedMessage());
+		}
+
 		// we don't want to store userdata in the description
-		project.setUsers(null);
+		goldProject.setUsers(null);
 
 		StringBuffer command = new StringBuffer("gchproject ");
-		String desc = JSONHelpers.convertToJSONString(project);
+		String desc = JSONHelpers.convertToJSONString(goldProject);
 		command.append("-d '" + desc + "' ");
 
 		command.append(projName);
