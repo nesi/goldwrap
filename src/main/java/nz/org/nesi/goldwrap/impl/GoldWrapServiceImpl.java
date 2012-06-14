@@ -10,6 +10,7 @@ import javax.ws.rs.Path;
 
 import nz.org.nesi.goldwrap.Config;
 import nz.org.nesi.goldwrap.api.GoldWrapService;
+import nz.org.nesi.goldwrap.domain.Allocation;
 import nz.org.nesi.goldwrap.domain.ExternalCommand;
 import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Project;
@@ -240,13 +241,12 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 
 		List<String> command = Lists.newArrayList("gmkproject");
-		// StringBuffer command = new StringBuffer("gmkproject ");
-		// proj.setUsers(new ArrayList<User>());
-		proj.setUsers(null);
-		proj.setAllocations(null);
+
+		proj.setUsers(new ArrayList<User>());
+		proj.setAllocations(new ArrayList<Allocation>());
 
 		String desc = JSONHelpers.convertToJSONString(proj);
-
+		desc = "'{\"projectId\":\"" + projName + "\"'}";
 		command.add("-d");
 		command.add("'" + desc + "'");
 
