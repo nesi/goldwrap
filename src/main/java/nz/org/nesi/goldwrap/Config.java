@@ -48,7 +48,7 @@ public class Config {
 		return config;
 	}
 
-	public boolean debugEnabled() {
+	public static boolean debugEnabled() {
 		boolean enabled = false;
 
 		try {
