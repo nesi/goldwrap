@@ -243,9 +243,9 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		// StringBuffer command = new StringBuffer("gmkproject ");
 		proj.setUsers(new ArrayList<User>());
 
-		String desc = JSONHelpers.convertToJSONString(proj);
-		command.add("-d");
-		command.add("'" + desc + "'");
+		// String desc = JSONHelpers.convertToJSONString(proj);
+		// command.add("-d");
+		// command.add("'" + desc + "'");
 
 		// String users = Joiner.on(",").join(proj.getUsers());
 		//
