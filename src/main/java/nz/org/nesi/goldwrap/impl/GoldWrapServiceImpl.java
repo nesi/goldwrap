@@ -47,6 +47,13 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		return gc;
 	}
 
+	private static ExternalCommand executeGoldCommand(String[] command) {
+		ExternalCommand gc = new ExternalCommand(command);
+		gc.execute();
+		gc.verify();
+		return gc;
+	}
+
 	private static volatile boolean initialized = false;
 
 	public GoldWrapServiceImpl() {
@@ -232,11 +239,13 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			// }
 		}
 
-		StringBuffer command = new StringBuffer("gmkproject ");
+		List<String> command = Lists.newArrayList("gmkproject");
+		// StringBuffer command = new StringBuffer("gmkproject ");
 		proj.setUsers(new ArrayList<User>());
 
 		String desc = JSONHelpers.convertToJSONString(proj);
-		command.append("-d '" + desc + "' ");
+		command.add("-d");
+		command.add(desc);
 
 		// String users = Joiner.on(",").join(proj.getUsers());
 		//
@@ -244,17 +253,20 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		// command.append("-u '" + users + "' ");
 		// }
 
-		command.append("--createAccount=False ");
+		command.add("--createAccount=False");
 
 		if (proj.isFunded()) {
-			command.append("-X Funded=True ");
+			command.add("-X");
+			command.add("Funded=True");
 		} else {
-			command.append("-X Funded=False ");
+			command.add("-X");
+			command.add("Funded=False");
 		}
 
-		command.append(projName);
+		command.add(projName);
 
-		ExternalCommand ec = executeGoldCommand(command.toString());
+		ExternalCommand ec = executeGoldCommand(command
+				.toArray(new String[] {}));
 
 		if (!GoldHelper.projectExists(projName)) {
 			throw new ProjectFault(proj, "Can't create project.",

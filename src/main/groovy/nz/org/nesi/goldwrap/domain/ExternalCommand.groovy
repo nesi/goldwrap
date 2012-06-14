@@ -21,6 +21,7 @@ class ExternalCommand {
 	static hasMany = [stdout : String, stderr : String]
 
 	String command
+	String[] advancedCommand
 	int exitCode
 	List<String> stdOut
 	List<String> stdErr
@@ -35,11 +36,26 @@ class ExternalCommand {
 		this.command = command
 	}
 
+	public ExternalCommand(String[] advanced) {
+		this.advancedCommand = advanced
+	}
+
 	public String command() {
 		if ( Config.getCommandPrefix() ) {
 			return Config.getCommandPrefix()+command
 		} else {
 			return command
+		}
+	}
+
+	public String[] advancedCommand() {
+		if ( Config.getCommandPrefix() ) {
+			return [
+				Config.getCommandPrefix(),
+				advancedCommand
+			].flatten()
+		} else {
+			return advancedCommand
 		}
 	}
 
@@ -74,10 +90,18 @@ class ExternalCommand {
 			throw new RuntimeException("Command already executed.")
 		}
 
-		log.debug("Executing: "+command())
-
 		setExecuted(new Date())
-		def proc = command().execute()
+		Process proc = null
+		if ( command ) {
+
+			log.debug("Executing: "+command())
+
+			proc = command().execute()
+		} else {
+			log.debug("Executing advanced command...")
+			ProcessBuilder procBuilder = new ProcessBuilder(advancedCommand())
+			proc = procBuilder.start()
+		}
 		proc.waitFor()
 		setFinished(new Date())
 
@@ -100,8 +124,8 @@ class ExternalCommand {
 		}
 
 		if ( Config.debugEnabled() ) {
-			log.debug("STDOUT:\n\n"+Joiner.on('\n').join(stdout.iterator())+'\n')
-			log.debug("\nSTDERR:\n\n"+Joiner.on('\n').join(stderr.iterator())+'\n')
+			log.debug("STDOUT:\n\n"+Joiner.on('\n').join(stdout.iterator()))
+			log.debug("\nSTDERR:\n\n"+Joiner.on('\n').join(stderr.iterator()))
 		}
 
 		log.debug("Executed: "+command())
