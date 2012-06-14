@@ -100,8 +100,8 @@ class ExternalCommand {
 		}
 
 		if ( Config.debugEnabled() ) {
-			log.debug("STDOUT:\n\n"+Joiner.on('\n').join(stdout.iterator()))
-			log.debug("\nSTDERR:\n\n"+Joiner.on('\n').join(stderr.iterator()))
+			log.debug("STDOUT:\n\n"+Joiner.on('\n').join(stdout.iterator())+'\n')
+			log.debug("\nSTDERR:\n\n"+Joiner.on('\n').join(stderr.iterator())+'\n')
 		}
 
 		log.debug("Executed: "+command())
