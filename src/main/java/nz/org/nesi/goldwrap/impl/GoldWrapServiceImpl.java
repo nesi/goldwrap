@@ -536,7 +536,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		command.add(projName);
 
-		ExternalCommand ec = executeGoldCommand(command.toString());
+		ExternalCommand ec = executeGoldCommand(command);
 
 		// ensuring users are present
 		createOrModifyUsers(users);
