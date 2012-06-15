@@ -330,6 +330,26 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
+	public void delete(String resourceType) {
+
+		if ("users".equals(resourceType.toLowerCase())) {
+
+			for (User u : GoldHelper.getAllUsers()) {
+				deleteUser(u.getUserId());
+			}
+
+		} else if ("projects".equals(resourceType.toLowerCase())) {
+			for (Project p : GoldHelper.getAllProjects()) {
+				deleteProject(p.getProjectId());
+			}
+		} else if ("accounts".equals(resourceType.toLowerCase())) {
+			for (Account a : GoldHelper.getAllAccounts()) {
+				deleteAccount(a.getAccountId());
+			}
+		}
+
+	}
+
 	public void deleteAccount(Integer accNr) {
 
 		if (!GoldHelper.accountExists(accNr)) {
@@ -443,26 +463,6 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 	}
 
-	public void delete(String resourceType) {
-
-		if ("users".equals(resourceType.toLowerCase())) {
-
-			for (User u : GoldHelper.getAllUsers()) {
-				deleteUser(u.getUserId());
-			}
-
-		} else if ("projects".equals(resourceType.toLowerCase())) {
-			for (Project p : GoldHelper.getAllProjects()) {
-				deleteProject(p.getProjectId());
-			}
-		} else if ("accounts".equals(resourceType.toLowerCase())) {
-			for (Account a : GoldHelper.getAllAccounts()) {
-				deleteAccount(a.getAccountId());
-			}
-		}
-
-	}
-
 	public Machine getMachine(String machineName) {
 		checkMachineName(machineName);
 
@@ -488,6 +488,11 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	public List<Project> getProjectsForUser(String username) {
 		return GoldHelper.getProjectsForUser(username);
+	}
+
+	public List<Project> getProjectsWhereUserIsPrincipal(String username) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	public User getUser(String username) {

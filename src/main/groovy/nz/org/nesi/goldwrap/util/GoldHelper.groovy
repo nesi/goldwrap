@@ -380,6 +380,20 @@ class GoldHelper {
 		return projects
 	}
 
+	public static List<Project> getProjectsWhereUserIsPrincipal(String username) {
+		if (! isRegistered(username) ) {
+			throw new UserFault("Can't retrieve user.", "User " + username
+			+ " not in Gold database.", 404);
+		}
+
+		def projects = getAllProjects().findAll() { proj ->
+			proj.getPrincipal().equals(username)
+		} as List
+
+		return projects
+
+	}
+
 	static User getUser(String username) {
 		ExternalCommand ec = executeGoldCommand("glsuser -show Description "
 				+ username + " --quiet");
@@ -462,7 +476,6 @@ class GoldHelper {
 		}
 		result
 	}
-
 	static boolean projectExists(String projName) {
 
 		ExternalCommand gc = executeGoldCommand("glsproject -show Name -quiet");

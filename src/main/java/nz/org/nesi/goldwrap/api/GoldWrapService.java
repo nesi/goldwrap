@@ -218,6 +218,19 @@ public interface GoldWrapService {
 			@PathParam("username") String username);
 
 	/**
+	 * Queries and returns all projects where this user is the principal.
+	 * 
+	 * @param username
+	 *            the userId
+	 * @return a list of all {@link Project}s
+	 */
+	@GET
+	@Path("/users/{username}/projects/principal")
+	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+	public List<Project> getProjectsWhereUserIsPrincipal(
+			@PathParam("username") String username);
+
+	/**
 	 * Gets a list of all the machines that are configured in Gold.
 	 * 
 	 * @return a list of all {@link Machine}s
