@@ -220,6 +220,12 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			command.add("Funded=False");
 		}
 
+		String site = proj.getSite();
+		if (StringUtils.isNotBlank(site)) {
+			command.add("-X");
+			command.add("Site=" + site);
+		}
+
 		command.add(projName);
 
 		ExternalCommand ec = executeGoldCommand(command);
@@ -491,8 +497,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 	}
 
 	public List<Project> getProjectsWhereUserIsPrincipal(String username) {
-		// TODO Auto-generated method stub
-		return null;
+		return GoldHelper.getProjectsWhereUserIsPrincipal(username);
 	}
 
 	public User getUser(String username) {
@@ -695,6 +700,20 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		String desc = JSONHelpers.convertToJSONString(goldProject);
 		command.add("-d");
 		command.add(desc);
+
+		if (goldProject.isFunded()) {
+			command.add("-X");
+			command.add("Funded=True");
+		} else {
+			command.add("-X");
+			command.add("Funded=False");
+		}
+
+		String site = goldProject.getSite();
+		if (StringUtils.isNotBlank(site)) {
+			command.add("-X");
+			command.add("Site=" + site);
+		}
 
 		command.add(projName);
 

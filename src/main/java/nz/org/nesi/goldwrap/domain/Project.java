@@ -8,6 +8,7 @@ import nz.org.nesi.goldwrap.errors.ProjectFault;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 /**
@@ -19,6 +20,9 @@ import com.google.common.collect.Lists;
  */
 @XmlRootElement
 public class Project {
+
+	public static final List<String> ALLOWED_SITES = ImmutableList.of(
+			"Auckland", "Bluefern", "NIWA");
 
 	private String projectId = "";
 	private String projectTitle = "";
@@ -161,6 +165,13 @@ public class Project {
 		if (StringUtils.isBlank(getProjectId())) {
 			throw new ProjectFault(this, "Invalid project.",
 					"Project name can't be blank.");
+		}
+
+		if (StringUtils.isNotBlank(getSite())) {
+			if (!ALLOWED_SITES.contains(getSite())) {
+				throw new ProjectFault(this, "Invalid project.",
+						"Site name not allowed.");
+			}
 		}
 
 		if (!fullCheck) {
