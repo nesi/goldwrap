@@ -10,11 +10,14 @@ import javax.ws.rs.Path;
 
 import nz.org.nesi.goldwrap.Config;
 import nz.org.nesi.goldwrap.api.GoldWrapService;
+import nz.org.nesi.goldwrap.domain.Account;
 import nz.org.nesi.goldwrap.domain.Allocation;
 import nz.org.nesi.goldwrap.domain.ExternalCommand;
 import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Project;
 import nz.org.nesi.goldwrap.domain.User;
+import nz.org.nesi.goldwrap.errors.AccountFault;
+import nz.org.nesi.goldwrap.errors.AllocationFault;
 import nz.org.nesi.goldwrap.errors.MachineFault;
 import nz.org.nesi.goldwrap.errors.ProjectFault;
 import nz.org.nesi.goldwrap.errors.ServiceException;
@@ -24,6 +27,7 @@ import nz.org.nesi.goldwrap.utils.BeanHelpers;
 import nz.org.nesi.goldwrap.utils.JSONHelpers;
 
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateMidnight;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,12 +45,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 	public static Logger myLogger = LoggerFactory
 			.getLogger(GoldWrapServiceImpl.class);
 
-	private static ExternalCommand executeGoldCommand(String command) {
-		ExternalCommand gc = new ExternalCommand(command);
-		gc.execute();
-		gc.verify();
-		return gc;
-	}
+	private static volatile boolean initialized = false;
 
 	private static ExternalCommand executeGoldCommand(List<String> command) {
 		ExternalCommand gc = new ExternalCommand(command);
@@ -55,87 +54,36 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		return gc;
 	}
 
-	private static volatile boolean initialized = false;
+	private static ExternalCommand executeGoldCommand(String command) {
+		ExternalCommand gc = new ExternalCommand(command);
+		gc.execute();
+		gc.verify();
+		return gc;
+	}
 
 	public GoldWrapServiceImpl() {
 		initialize();
 	}
 
-	public synchronized void initialize() {
+	public void addUsersToProject(String projectName, List<User> users) {
 
-		if (!initialized) {
+		for (User user : users) {
 
-			try {
+			addUserToProject(projectName, user.getUserId());
 
-				File configDir = Config.getConfigDir();
-
-				myLogger.debug("Running init commands...");
-				File initFile = new File(configDir, "init.config");
-
-				if (initFile.exists()) {
-					List<String> lines = null;
-					try {
-						lines = Files.readLines(initFile, Charsets.UTF_8);
-					} catch (IOException e1) {
-						throw new RuntimeException("Can't read file: "
-								+ initFile.toString());
-					}
-
-					for (String line : lines) {
-						line = line.trim();
-						if (StringUtils.isEmpty(line) || line.startsWith("#")) {
-							continue;
-						}
-						myLogger.debug("Executing: " + line);
-						ExternalCommand ec = executeGoldCommand(line);
-
-						myLogger.debug("StdOut:\n\n{}\n\n", Joiner.on("\n")
-								.join(ec.getStdOut()));
-						myLogger.debug("StdErr:\n\n{}\n\n", Joiner.on("\n")
-								.join(ec.getStdErr()));
-
-					}
-
-				}
-				myLogger.debug("Trying to initialize static values...");
-
-				File machinesFile = new File(configDir, "machines.json");
-
-				if (machinesFile.exists()) {
-					try {
-						List<Machine> machines = JSONHelpers.readJSONfile(
-								machinesFile, Machine.class);
-
-						for (Machine m : machines) {
-
-							Machine mInGold = null;
-							try {
-								mInGold = getMachine(m.getName());
-								myLogger.debug("Machine " + m.getName()
-										+ " in Gold, modifying it...");
-								modifyMachine(m.getName(), m);
-							} catch (MachineFault mf) {
-								myLogger.debug("Machine " + m.getName()
-										+ " not in Gold, creating it...");
-								createMachine(m);
-							}
-
-						}
-
-					} catch (Exception e) {
-						throw new RuntimeException("Can't parse json file: "
-								+ machinesFile.toString(), e);
-					}
-				}
-			} finally {
-				initialized = true;
-			}
 		}
 
 	}
 
 	public Project addUserToProject(String projName, String userId) {
 		return GoldHelper.addUserToProject(projName, userId);
+	}
+
+	public void checkMachineName(String machineName) {
+		if (StringUtils.isBlank(machineName)) {
+			throw new ServiceException("Can't execute operation.",
+					"Machine name blank or not specified.");
+		}
 	}
 
 	private void checkProjectname(String projectname) {
@@ -149,13 +97,6 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		if (StringUtils.isBlank(username)) {
 			throw new ServiceException("Can't execute operation.",
 					"Username blank or not specified.");
-		}
-	}
-
-	public void checkMachineName(String machineName) {
-		if (StringUtils.isBlank(machineName)) {
-			throw new ServiceException("Can't execute operation.",
-					"Machine name blank or not specified.");
 		}
 	}
 
@@ -195,6 +136,18 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 					"Unknow reason");
 		}
 
+	}
+
+	private void createOrModifyUsers(List<User> users) {
+		for (User user : users) {
+			if (GoldHelper.isRegistered(user.getUserId())) {
+				myLogger.debug("Potentially modifying user " + user.getUserId());
+				modifyUser(user.getUserId(), user);
+			} else {
+				myLogger.debug("Creating user: " + user.getUserId());
+				createUser(user);
+			}
+		}
 	}
 
 	public void createProject(Project proj) {
@@ -327,18 +280,6 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	private void createOrModifyUsers(List<User> users) {
-		for (User user : users) {
-			if (GoldHelper.isRegistered(user.getUserId())) {
-				myLogger.debug("Potentially modifying user " + user.getUserId());
-				modifyUser(user.getUserId(), user);
-			} else {
-				myLogger.debug("Creating user: " + user.getUserId());
-				createUser(user);
-			}
-		}
-	}
-
 	public void createUser(User user) {
 
 		user.validate(false);
@@ -389,6 +330,23 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
+	public void deleteAccount(Integer accNr) {
+
+		if (!GoldHelper.accountExists(accNr)) {
+			throw new AccountFault("Can't delete account " + accNr + ".",
+					"Account " + accNr + " not in Gold database.", 404);
+		}
+
+		String command = "grmaccount " + accNr;
+
+		ExternalCommand ec = executeGoldCommand(command);
+
+		if (GoldHelper.accountExists(accNr)) {
+			throw new AccountFault("Could not delete account " + accNr + ".",
+					"Unknown reason", 404);
+		}
+	}
+
 	public void deleteProject(String projName) {
 
 		checkProjectname(projName);
@@ -426,6 +384,72 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		if (GoldHelper.isRegistered(username)) {
 			throw new UserFault("Could not delete user.", "Unknown reason.",
 					500);
+		}
+
+	}
+
+	public void deposit(String projName, Allocation alloc) {
+
+		if (alloc == null) {
+			throw new AllocationFault("Can't deposit allocation.",
+					"No allocation provided", 500);
+		}
+
+		alloc.validate(false);
+
+		Project p = getProject(projName);
+
+		Account acc = GoldHelper.getAccount(p.getAccountId());
+
+		List<String> command = Lists.newArrayList("gdeposit");
+		command.add("-a");
+		command.add(acc.getAccountId().toString());
+
+		DateMidnight start = new DateMidnight(alloc.getStartyear(),
+				alloc.getStartmonth(), 1);
+		DateMidnight end = start.plusMonths(alloc.getRechargemonths());
+
+		String startString = start.getYear() + "-"
+				+ String.format("%02d", start.getMonthOfYear()) + "-"
+				+ String.format("%02d", start.getDayOfMonth());
+		String endString = end.getYear() + "-"
+				+ String.format("%02d", end.getMonthOfYear()) + "-"
+				+ String.format("%02d", end.getDayOfMonth());
+
+		command.add("-s");
+		command.add(startString);
+		command.add("-e");
+		command.add(endString);
+		command.add("-z");
+		command.add(alloc.getAllocation().toString());
+		command.add("-L");
+		command.add(new Integer(alloc.getAllocation() * 3).toString());
+		command.add("-h");
+
+		ExternalCommand ec = executeGoldCommand(command);
+
+		if (ec.getExitCode() != 0) {
+			throw new AllocationFault(alloc, "Could not add allocation.",
+					Joiner.on('\n').join(ec.getStdErr()));
+		}
+	}
+
+	public void delete(String resourceType) {
+
+		if ("users".equals(resourceType.toLowerCase())) {
+
+			for (User u : GoldHelper.getAllUsers()) {
+				deleteUser(u.getUserId());
+			}
+
+		} else if ("projects".equals(resourceType.toLowerCase())) {
+			for (Project p : GoldHelper.getAllProjects()) {
+				deleteProject(p.getProjectId());
+			}
+		} else if ("accounts".equals(resourceType.toLowerCase())) {
+			for (Account a : GoldHelper.getAllAccounts()) {
+				deleteAccount(a.getAccountId());
+			}
 		}
 
 	}
@@ -474,8 +498,127 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		return GoldHelper.getUsersForProject(projName);
 	}
 
+	public synchronized void initialize() {
+
+		if (!initialized) {
+
+			try {
+
+				File configDir = Config.getConfigDir();
+
+				myLogger.debug("Running init commands...");
+				File initFile = new File(configDir, "init.config");
+
+				if (initFile.exists()) {
+					List<String> lines = null;
+					try {
+						lines = Files.readLines(initFile, Charsets.UTF_8);
+					} catch (IOException e1) {
+						throw new RuntimeException("Can't read file: "
+								+ initFile.toString());
+					}
+
+					for (String line : lines) {
+						line = line.trim();
+						if (StringUtils.isEmpty(line) || line.startsWith("#")) {
+							continue;
+						}
+						myLogger.debug("Executing: " + line);
+						ExternalCommand ec = executeGoldCommand(line);
+
+						myLogger.debug("StdOut:\n\n{}\n\n", Joiner.on("\n")
+								.join(ec.getStdOut()));
+						myLogger.debug("StdErr:\n\n{}\n\n", Joiner.on("\n")
+								.join(ec.getStdErr()));
+
+					}
+
+				}
+				myLogger.debug("Trying to initialize static values...");
+
+				File machinesFile = new File(configDir, "machines.json");
+
+				if (machinesFile.exists()) {
+					try {
+						List<Machine> machines = JSONHelpers.readJSONfile(
+								machinesFile, Machine.class);
+
+						for (Machine m : machines) {
+
+							Machine mInGold = null;
+							try {
+								mInGold = getMachine(m.getName());
+								myLogger.debug("Machine " + m.getName()
+										+ " in Gold, modifying it...");
+								modifyMachine(m.getName(), m);
+							} catch (MachineFault mf) {
+								myLogger.debug("Machine " + m.getName()
+										+ " not in Gold, creating it...");
+								createMachine(m);
+							}
+
+						}
+
+					} catch (Exception e) {
+						throw new RuntimeException("Can't parse json file: "
+								+ machinesFile.toString(), e);
+					}
+				}
+			} finally {
+				initialized = true;
+			}
+		}
+
+	}
+
 	public boolean isRegistered(String user) {
 		return GoldHelper.isRegistered(user);
+	}
+
+	public Machine modifyMachine(String machName, Machine machine) {
+
+		checkMachineName(machName);
+
+		machine.validate(true);
+
+		Machine mach = null;
+		try {
+			mach = getMachine(machName);
+		} catch (Exception e) {
+			myLogger.debug("Can't load machine {}", machName, e);
+		}
+
+		if (mach == null) {
+			throw new MachineFault("Can't modify machine " + machName + ".",
+					"Machine " + machName + " not in Gold database", 404);
+		}
+
+		String newArch = machine.getArch();
+		String newOs = machine.getOpsys();
+		String newDesc = machine.getDescription();
+
+		List<String> command = Lists.newArrayList("gchmachine");
+		if (StringUtils.isNotBlank(newDesc)) {
+			command.add("-d");
+			command.add(newDesc);
+		}
+
+		if (StringUtils.isNotBlank(newArch)) {
+			command.add("--arch");
+			command.add(newArch);
+		}
+
+		if (StringUtils.isNotBlank(newOs)) {
+			command.add("--opsys");
+			command.add(newOs);
+		}
+
+		command.add(machName);
+
+		ExternalCommand ec = executeGoldCommand(command);
+
+		return getMachine(machName);
+
 	}
 
 	public Project modifyProject(String projName, Project project) {
@@ -550,62 +693,6 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		Project p = getProject(projName);
 		return p;
-
-	}
-
-	public void addUsersToProject(String projectName, List<User> users) {
-
-		for (User user : users) {
-
-			addUserToProject(projectName, user.getUserId());
-
-		}
-
-	}
-
-	public Machine modifyMachine(String machName, Machine machine) {
-
-		checkMachineName(machName);
-
-		machine.validate(true);
-
-		Machine mach = null;
-		try {
-			mach = getMachine(machName);
-		} catch (Exception e) {
-			myLogger.debug("Can't load machine {}", machName, e);
-		}
-
-		if (mach == null) {
-			throw new MachineFault("Can't modify machine " + machName + ".",
-					"Machine " + machName + " not in Gold database", 404);
-		}
-
-		String newArch = machine.getArch();
-		String newOs = machine.getOpsys();
-		String newDesc = machine.getDescription();
-
-		List<String> command = Lists.newArrayList("gchmachine");
-		if (StringUtils.isNotBlank(newDesc)) {
-			command.add("-d");
-			command.add(newDesc);
-		}
-
-		if (StringUtils.isNotBlank(newArch)) {
-			command.add("--arch");
-			command.add(newArch);
-		}
-
-		if (StringUtils.isNotBlank(newOs)) {
-			command.add("--opsys");
-			command.add(newOs);
-		}
-
-		command.add(machName);
-
-		ExternalCommand ec = executeGoldCommand(command);
-
-		return getMachine(machName);
 
 	}
 

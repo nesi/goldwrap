@@ -142,7 +142,11 @@ class ExternalCommand {
 			log.debug("\nSTDERR:\n\n"+Joiner.on('\n').join(stderr.iterator()))
 		}
 
-		log.debug("Executed: "+command())
+		if ( command ) {
+			log.debug("Executed: "+command())
+		} else {
+			log.debug("Executed advanced command...")
+		}
 	}
 
 	@Override

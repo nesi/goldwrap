@@ -40,6 +40,15 @@ class GoldHelper {
 	static final String PROJECTS_KEY = "Projects"
 	static final String MACHINES_KEY = "Machines"
 
+	static boolean accountExists(Integer accountId) {
+		ExternalCommand gc = executeGoldCommand("glsaccount -show Id -quiet");
+
+		if (gc.getStdOut().contains(accountId.toString())) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	static Project addUserToProject(String projName, String user) {
 
 		if ( ! isRegistered(user) ) {
@@ -86,11 +95,112 @@ class GoldHelper {
 		}
 
 	}
+
 	private static ExternalCommand executeGoldCommand(String command) {
 		ExternalCommand gc = new ExternalCommand(command);
 		gc.execute();
 		gc.verify();
 		return gc;
+	}
+
+	public static Account getAccount(Integer accountId) {
+
+		if (! accountExists(accountId)) {
+			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404);
+		}
+
+		ExternalCommand ec = new ExternalCommand('glsaccount -A --raw '+accountId)
+		ec.execute()
+		def map = parseGLSOutput(ec.getStdOut())
+
+		if ( map.size() == 0 ) {
+			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404);
+		}
+
+		if ( map.size() > 1 ) {
+			throw new ProjectFault("Multiple accounts with id " + accountId + " found.", "Internal error", 500);
+		}
+
+		String key = map.keySet().iterator().next()
+		Map value = map.values().iterator().next()
+
+		log.debug('Creating account {}', key)
+
+		Account acc = new Account(accountId);
+
+		def usersString = value[USERS]
+		def users = usersString.split (',') as List
+
+		def result = []
+		if ( users.contains(ANY_KEY)) {
+			result = getAllUsers()
+		} else {
+
+			users.each { it ->
+				try {
+					User u = getUser(it)
+					result.add(u)
+				}  catch (all) {
+					UserFault f = new UserFault("Can't load user '"+it+"'.", "Error retrieving user '"+it+"' from Gold.", 500)
+					f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
+					throw f
+				}
+			}
+		}
+		acc.setUsers(result)
+
+		def resultP = []
+		def projectsString = value[PROJECTS_KEY]
+		def projects = projectsString.split (',') as List
+		if ( projects.contains(ANY_KEY)) {
+			resultP = getAllProjects()
+		} else {
+			projects.each { it ->
+				try {
+					Project p = getProject(it)
+					resultP.add(p)
+				}  catch (all) {
+					ProjectFault f = new ProjectFault("Can't load project '"+it+"'.", "Error retrieving project '"+it+"' from Gold.", 500)
+					f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
+					throw f
+				}
+			}
+		}
+		acc.setProjects(resultP)
+
+
+		def desc = value[DESCRIPTION_KEY]
+		acc.setDescription(desc)
+		return acc
+	}
+
+
+	// incomplete, only used for account deletion
+	static List<Account> getAllAccounts() {
+
+		ExternalCommand ec = new ExternalCommand('glsaccount -A --raw')
+		ec.execute()
+		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
+
+		def accounts = []
+
+		map.each { key, value ->
+			log.debug('Creating machine {}', key)
+
+			def id = Integer.parseInt(value[ID_KEY])
+			def name = value[NAME_KEY]
+			def amount = value[AMOUNT_KEY]
+			def projects = value[PROJECTS_KEY]
+			def users = value[USERS]
+			def machines = value[MACHINES_KEY]
+			def desc = value[DESCRIPTION_KEY]
+
+			Account a = new Account(id)
+			accounts.add(a)
+		}
+
+		accounts
+
 	}
 
 	static List<Machine> getAllMachines() {
@@ -196,77 +306,6 @@ class GoldHelper {
 		m.setOpsys(opsys)
 		m.setDescription(desc)
 		m
-	}
-
-	public static Account getAccount(Integer accountId) {
-
-		if (! accountExists(accountId)) {
-			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404);
-		}
-
-		ExternalCommand ec = new ExternalCommand('glsaccount -A --raw '+accountId)
-		ec.execute()
-		def map = parseGLSOutput(ec.getStdOut())
-
-		if ( map.size() == 0 ) {
-			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404);
-		}
-
-		if ( map.size() > 1 ) {
-			throw new ProjectFault("Multiple accounts with id " + accountId + " found.", "Internal error", 500);
-		}
-
-		String key = map.keySet().iterator().next()
-		Map value = map.values().iterator().next()
-
-		log.debug('Creating account {}', key)
-
-		Account acc = new Account(accountId);
-
-		def usersString = value[USERS]
-		def users = usersString.split (',') as List
-
-		def result = []
-		if ( users.contains(ANY_KEY)) {
-			result = getAllUsers()
-		} else {
-
-			users.each { it ->
-				try {
-					User u = getUser(it)
-					result.add(u)
-				}  catch (all) {
-					UserFault f = new UserFault("Can't load user '"+it+"'.", "Error retrieving user '"+it+"' from Gold.", 500)
-					f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
-					throw f
-				}
-			}
-		}
-		acc.setUsers(result)
-
-		def resultP = []
-		def projectsString = value[PROJECTS_KEY]
-		def projects = projectsString.split (',') as List
-		if ( projects.contains(ANY_KEY)) {
-			resultP = getAllProjects()
-		} else {
-			projects.each { it ->
-				try {
-					Project p = getProject(it)
-					resultP.add(p)
-				}  catch (all) {
-					ProjectFault f = new ProjectFault("Can't load project '"+it+"'.", "Error retrieving project '"+it+"' from Gold.", 500)
-					f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
-					throw f
-				}
-			}
-		}
-		acc.setProjects(resultP)
-
-
-		def desc = value[DESCRIPTION_KEY]
-		acc.setDescription(desc)
-		return acc
 	}
 
 	public static Project getProject(String projName) {
@@ -396,6 +435,10 @@ class GoldHelper {
 	}
 
 	static def parseGLSOutput(def output) {
+		return parseGLSOutput(output, NAME_KEY)
+	}
+
+	static def parseGLSOutput(def output, String KEY) {
 
 		output = output.findAll {
 			( ! it.trim().startsWith("-") ) && ! (it.trim().startsWith("root") )
@@ -412,22 +455,12 @@ class GoldHelper {
 					Splitter.on('|').trimResults().split(line))
 
 			def map = [keyList, tokens].transpose().collectEntries{ it }
-			def name = map.get(NAME_KEY)
+			def name = map.get(KEY)
 			if ( name ) {
-				result[map.get(NAME_KEY)] = map
+				result[map.get(KEY)] = map
 			}
 		}
 		result
-	}
-
-	static boolean accountExists(Integer accountId) {
-		ExternalCommand gc = executeGoldCommand("glsaccount -show Id -quiet");
-
-		if (gc.getStdOut().contains(accountId.toString())) {
-			return true;
-		} else {
-			return false;
-		}
 	}
 
 	static boolean projectExists(String projName) {

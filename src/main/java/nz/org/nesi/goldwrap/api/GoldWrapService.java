@@ -12,6 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import nz.org.nesi.goldwrap.domain.Allocation;
 import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Project;
 import nz.org.nesi.goldwrap.domain.User;
@@ -114,6 +115,17 @@ public interface GoldWrapService {
 	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
 	public List<User> getUsersForProject(
 			@PathParam("projectName") String projName);
+
+	/**
+	 * Deposit an allocation into a project.
+	 * 
+	 * @param alloc
+	 *            the allocation to deposit
+	 */
+	@POST
+	@Path("/projects/{projectName}/deposit")
+	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+	public void deposit(@PathParam("projectName") String proj, Allocation alloc);
 
 	/**
 	 * Adds a user to this project.
@@ -254,5 +266,15 @@ public interface GoldWrapService {
 	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
 	public Machine modifyMachine(@PathParam("machineName") String machName,
 			Machine machine);
+
+	/**
+	 * Only for development, batch-deletes a specific resource type
+	 * 
+	 * @param type
+	 *            the name of the resource
+	 */
+	@POST
+	@Path("/develop/deleteall/{resourceType}")
+	public void delete(@PathParam("resourceType") String type);
 
 }
