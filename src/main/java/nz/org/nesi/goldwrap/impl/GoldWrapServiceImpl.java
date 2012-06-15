@@ -407,7 +407,8 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		DateMidnight start = new DateMidnight(alloc.getStartyear(),
 				alloc.getStartmonth(), 1);
-		DateMidnight end = start.plusMonths(alloc.getRechargemonths());
+		DateMidnight end = start.plusMonths(alloc.getRechargemonths())
+				.minusDays(1);
 
 		String startString = start.getYear() + "-"
 				+ String.format("%02d", start.getMonthOfYear()) + "-"
