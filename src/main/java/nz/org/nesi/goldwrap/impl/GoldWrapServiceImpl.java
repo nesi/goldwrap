@@ -401,37 +401,45 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		Account acc = GoldHelper.getAccount(p.getAccountId());
 
-		List<String> command = Lists.newArrayList("gdeposit");
-		command.add("-a");
-		command.add(acc.getAccountId().toString());
-
 		DateMidnight start = new DateMidnight(alloc.getStartyear(),
 				alloc.getStartmonth(), 1);
-		DateMidnight end = start.plusMonths(alloc.getRechargemonths())
-				.minusDays(1);
+		DateMidnight end = null;
 
-		String startString = start.getYear() + "-"
-				+ String.format("%02d", start.getMonthOfYear()) + "-"
-				+ String.format("%02d", start.getDayOfMonth());
-		String endString = end.getYear() + "-"
-				+ String.format("%02d", end.getMonthOfYear()) + "-"
-				+ String.format("%02d", end.getDayOfMonth());
+		myLogger.debug("Depositing allocation into project " + projName);
+		for (int i = 0; i < alloc.getRecharge(); i++) {
 
-		command.add("-s");
-		command.add(startString);
-		command.add("-e");
-		command.add(endString);
-		command.add("-z");
-		command.add(alloc.getAllocation().toString());
-		command.add("-L");
-		command.add(new Integer(alloc.getAllocation() * 3).toString());
-		command.add("-h");
+			end = start.plusMonths(alloc.getRechargemonths()).minusDays(1);
+			myLogger.debug("deposit " + (i + 1) + " for period: {} - {}",
+					start.toString(), end.toString());
+			List<String> command = Lists.newArrayList("gdeposit");
+			command.add("-a");
+			command.add(acc.getAccountId().toString());
 
-		ExternalCommand ec = executeGoldCommand(command);
+			String startString = start.getYear() + "-"
+					+ String.format("%02d", start.getMonthOfYear()) + "-"
+					+ String.format("%02d", start.getDayOfMonth());
+			String endString = end.getYear() + "-"
+					+ String.format("%02d", end.getMonthOfYear()) + "-"
+					+ String.format("%02d", end.getDayOfMonth());
 
-		if (ec.getExitCode() != 0) {
-			throw new AllocationFault(alloc, "Could not add allocation.",
-					Joiner.on('\n').join(ec.getStdErr()));
+			command.add("-s");
+			command.add(startString);
+			command.add("-e");
+			command.add(endString);
+			command.add("-z");
+			command.add(alloc.getAllocation().toString());
+			command.add("-L");
+			command.add(new Integer(alloc.getAllocation() * 3).toString());
+			command.add("-h");
+
+			ExternalCommand ec = executeGoldCommand(command);
+
+			if (ec.getExitCode() != 0) {
+				throw new AllocationFault(alloc, "Could not add allocation.",
+						Joiner.on('\n').join(ec.getStdErr()));
+			}
+
+			start = end.plusDays(1);
 		}
 	}
 
