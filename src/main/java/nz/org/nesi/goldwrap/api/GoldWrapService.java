@@ -225,7 +225,7 @@ public interface GoldWrapService {
 	 * @return a list of all {@link Project}s
 	 */
 	@GET
-	@Path("/users/{username}/projects/principal")
+	@Path("/users/{username}/principal")
 	@Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
 	public List<Project> getProjectsWhereUserIsPrincipal(
 			@PathParam("username") String username);
