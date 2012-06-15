@@ -246,9 +246,25 @@ class GoldHelper {
 				return
 			}
 
-
-			def users = value[USERS].split (',') as List
-			proj.setUsers(users)
+			String usersString = value[USERS]
+			if ( usersString) {
+				usersString = usersString.trim()
+				def users = usersString.split (',') as List
+				if ( users ) {
+					def result = []
+					users.each { it ->
+						try {
+							User u = getUser(it)
+							result.add(u)
+						}  catch (all) {
+							UserFault f = new UserFault("Can't load user '"+it+"'.", "Error retrieving user '"+it+"' from Gold.", 500)
+							f.getFaultInfo().setException(ExceptionUtils.getStackTrace(all))
+							throw f
+						}
+					}
+					proj.setUsers(result)
+				}
+			}
 
 			projects.add(proj)
 		}
