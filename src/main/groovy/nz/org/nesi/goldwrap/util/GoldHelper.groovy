@@ -387,7 +387,10 @@ class GoldHelper {
 		}
 
 		def projects = getAllProjects().findAll() { proj ->
-			proj.getPrincipal().equals(username)
+			String principal = proj.getPrincipal()
+			if ( principal ) {
+				return principal.equals(username)
+			}
 		} as List
 
 		return projects
