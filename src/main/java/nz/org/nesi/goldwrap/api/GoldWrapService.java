@@ -286,7 +286,7 @@ public interface GoldWrapService {
 	 * @param type
 	 *            the name of the resource
 	 */
-	@POST
+	@DELETE
 	@Path("/develop/deleteall/{resourceType}")
 	public void delete(@PathParam("resourceType") String type);
 
