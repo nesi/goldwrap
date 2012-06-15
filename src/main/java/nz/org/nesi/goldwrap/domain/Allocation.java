@@ -4,8 +4,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import nz.org.nesi.goldwrap.errors.AllocationFault;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Class to model Allocations.
  * 
@@ -20,8 +18,6 @@ public class Allocation {
 	private Integer recharge = -1;
 	private Integer startmonth = -1;
 	private Integer startyear = -1;
-
-	private String site = "";
 
 	/**
 	 * Allocation per recharge period.
@@ -52,18 +48,6 @@ public class Allocation {
 	}
 
 	/**
-	 * Not sure what this is, it's not used in the respective gold command.
-	 * 
-	 * From the wiki: in the portal, this should be a drop down list using
-	 * labels from the guidelines which map to internal names.
-	 * 
-	 * @return the site
-	 */
-	public String getSite() {
-		return site;
-	}
-
-	/**
 	 * The startmonth.
 	 * 
 	 * @return startmonth
@@ -91,10 +75,6 @@ public class Allocation {
 
 	public void setRechargemonths(Integer rechargemonths) {
 		this.rechargemonths = rechargemonths;
-	}
-
-	public void setSite(String site) {
-		this.site = site;
 	}
 
 	public void setStartmonth(Integer startmonth) {
@@ -133,11 +113,6 @@ public class Allocation {
 
 		if (!fullCheck) {
 			return;
-		}
-
-		if (StringUtils.isBlank(site)) {
-			throw new AllocationFault(this, "Invalid Allocation.",
-					"site must be specified");
 		}
 
 	}

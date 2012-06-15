@@ -28,6 +28,7 @@ public class Project {
 	private String principal = "";
 	private Boolean funded = false;
 	private Long timestamp = -1L;
+	private String site = "";
 
 	private Integer accountId = -1;
 
@@ -72,8 +73,22 @@ public class Project {
 		return projectId;
 	}
 
+	/**
+	 * A human readable title.
+	 * 
+	 * @return the project title
+	 */
 	public String getProjectTitle() {
 		return projectTitle;
+	}
+
+	/**
+	 * The site where the project will be run.
+	 * 
+	 * @return the name of the site
+	 */
+	public String getSite() {
+		return site;
 	}
 
 	/**
@@ -127,6 +142,10 @@ public class Project {
 
 	public void setProjectTitle(String projectTitle) {
 		this.projectTitle = projectTitle;
+	}
+
+	public void setSite(String site) {
+		this.site = site;
 	}
 
 	public void setTimestamp(Long timestamp) {
