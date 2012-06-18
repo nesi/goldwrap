@@ -453,9 +453,13 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			command.add("-e");
 			command.add(endString);
 			command.add("-z");
-			command.add(alloc.getAllocation().toString());
+
+			Integer allocationPerPeriod = alloc.getAllocation()
+					/ alloc.getRecharge();
+
+			command.add(allocationPerPeriod.toString());
 			command.add("-L");
-			command.add(new Integer(alloc.getAllocation() * 3).toString());
+			command.add(new Integer(allocationPerPeriod * 3).toString());
 			command.add("-h");
 
 			ExternalCommand ec = executeGoldCommand(command);

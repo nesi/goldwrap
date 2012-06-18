@@ -20,7 +20,7 @@ public class Allocation {
 	private Integer startyear = -1;
 
 	/**
-	 * Allocation per recharge period.
+	 * Total allocation amount for all rechargemonths specified.
 	 * 
 	 * @return the allocation
 	 */
