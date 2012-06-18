@@ -5,4 +5,27 @@
     "opsys":"AIX",
     "description":"HPCF Supercomputer"
 }
+{	"name":"kerr",
+	"arch":"POWER7",
+	"opsys":"AIX",
+	"description":"P7 AIX cluster at BLUEFERN"
+}
+{
+	"name":"beatrice",
+	"arch":"POWER7",
+	"opsys":"AIX",
+	"description":"P7 LINUX cluster at BLUEFERN"
+}
+{
+	"name":"foster",
+	"arch":"BGP",
+	"opsys":"LINUX",
+	"description":"BGP at BLUEFERN"
+}
+{
+	"name":"pan",
+	"arch"="X86_64",
+	"opsys":"LINUX",
+	"description":"x86_64 at CER"
+}
 ]
