@@ -27,7 +27,6 @@ public class Project {
 	private String projectHistory = "";
 	private String principal = "";
 	private Boolean funded = false;
-	private Long timestamp = -1L;
 	private String site = "";
 
 	private Integer accountId = -1;
@@ -39,6 +38,12 @@ public class Project {
 		this.projectId = name;
 	}
 
+	/**
+	 * Only used internally, this one doesn't need to be specified when creating
+	 * a project.
+	 * 
+	 * @return the id of the account this project is linked to
+	 */
 	public Integer getAccountId() {
 		return accountId;
 	}
@@ -92,15 +97,6 @@ public class Project {
 	}
 
 	/**
-	 * Not sure what that is for...
-	 * 
-	 * @return the timestamp
-	 */
-	public Long getTimestamp() {
-		return timestamp;
-	}
-
-	/**
 	 * A list of userIds for users who are members of this project.
 	 */
 	public List<User> getUsers() {
@@ -146,10 +142,6 @@ public class Project {
 
 	public void setSite(String site) {
 		this.site = site;
-	}
-
-	public void setTimestamp(Long timestamp) {
-		this.timestamp = timestamp;
 	}
 
 	public void setUsers(List<User> users) {
