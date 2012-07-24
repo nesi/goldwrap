@@ -20,3 +20,23 @@ A testversion is installed and deployed here: http://gold.nesi.org.nz:8080/goldw
     mvn clean install -P deb 
 	
 Build artifacts are in target/ directory...
+
+### Run in Jetty
+
+    mvn jetty:run-war
+    
+to debug from Eclipse:
+
+    export MAVEN_OPTS="-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044"
+    
+then debug in Eclipse as remote application, setting port 1044
+
+### Configure to access gold via ssh
+
+Config directory in $HOME/.goldwrap, file named "goldwrap.config":
+
+    prefix=ssh gold@gold.dev.nesi.org.nz /opt/gold/bin/
+    # printing out commands it sends to gold (including stdout & stderr)
+    debug=true
+
+
