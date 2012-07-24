@@ -277,7 +277,7 @@
 	<parent>
 		<groupId>nz.org.nesi</groupId>
 		<artifactId>nesi</artifactId>
-		<version>0.17</version>
+		<version>0.11</version>
 	</parent>
 	
 	<profiles>
@@ -449,9 +449,4 @@
 		</profile>	
 		</profiles>
 	
-	<scm>
-		<url>https://github.com/nesi/goldwrap</url>
-		<connection>scm:git:git://github.com/nesi/goldwrap.git</connection>
-		<developerConnection>scm:git:git@github.com:nesi/goldwrap.git</developerConnection>
-	</scm>
 </project>
