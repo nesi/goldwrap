@@ -1,31 +1,32 @@
 [
 {
-    "name":"fitzroy",
-    "arch":"POWER6",
-    "opsys":"AIX",
-    "description":"HPCF Supercomputer"
-}
-{	"name":"kerr",
-	"arch":"POWER7",
-	"opsys":"AIX",
-	"description":"P7 AIX cluster at BLUEFERN"
-}
+"name":"fitzroy",
+"arch":"POWER6",
+"opsys":"AIX",
+"description":"HPCF_Supercomputer"
+},
 {
-	"name":"beatrice",
-	"arch":"POWER7",
-	"opsys":"AIX",
-	"description":"P7 LINUX cluster at BLUEFERN"
-}
+"name":"kerr",
+"arch":"POWER7",
+"opsys":"AIX",
+"description":"P7_AIX_cluster_at_BLUEFERN"
+},
 {
-	"name":"foster",
-	"arch":"BGP",
-	"opsys":"LINUX",
-	"description":"BGP at BLUEFERN"
-}
+"name":"beatrice",
+"arch":"POWER7",
+"opsys":"AIX",
+"description":"P7_LINUX_cluster_at_BLUEFERN"
+},
 {
-	"name":"pan",
-	"arch"="X86_64",
-	"opsys":"LINUX",
-	"description":"x86_64 at CER"
+"name":"foster",
+"arch":"BGP",
+"opsys":"LINUX",
+"description":"BGP_at_BLUEFERN"
+},
+{
+"name":"pan",
+"arch":"X86_64",
+"opsys":"LINUX",
+"description":"x86_64_at_CER"
 }
 ]
