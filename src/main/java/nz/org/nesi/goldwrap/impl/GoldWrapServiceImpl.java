@@ -18,6 +18,7 @@ import nz.org.nesi.goldwrap.domain.Project;
 import nz.org.nesi.goldwrap.domain.User;
 import nz.org.nesi.goldwrap.errors.AccountFault;
 import nz.org.nesi.goldwrap.errors.AllocationFault;
+import nz.org.nesi.goldwrap.errors.GoldCommandException;
 import nz.org.nesi.goldwrap.errors.MachineFault;
 import nz.org.nesi.goldwrap.errors.ProjectFault;
 import nz.org.nesi.goldwrap.errors.ServiceException;
@@ -110,26 +111,31 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 					"Machine name '" + machName + "' already exists in Gold.");
 		}
 
-		StringBuffer command = new StringBuffer("gmkmachine ");
+		List<String> command = Lists.newArrayList("gmkmachine");
 
 		String desc = mach.getDescription();
 		if (StringUtils.isNotBlank(desc)) {
-			command.append("-d '" + desc + "' ");
+			command.add("-d");
+			command.add(desc);
 		}
 
 		String arch = mach.getArch();
 		if (StringUtils.isNotBlank(arch)) {
-			command.append("--arch '" + arch + "' ");
+			command.add("--arch");
+			command.add(arch);
+
 		}
 
 		String opsys = mach.getOpsys();
 		if (StringUtils.isNotBlank(opsys)) {
-			command.append("--opsys '" + opsys + "' ");
+			command.add("--opsys");
+			command.add(opsys);
+
 		}
 
-		command.append(machName);
+		command.add(machName);
 
-		ExternalCommand ec = executeGoldCommand(command.toString());
+		ExternalCommand ec = executeGoldCommand(command);
 
 		if (!GoldHelper.machineExists(machName)) {
 			throw new MachineFault(mach, "Can't create machine.",
@@ -578,13 +584,20 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 								myLogger.debug("Machine " + m.getName()
 										+ " not in Gold, creating it...");
 								createMachine(m);
+							} catch (GoldCommandException gce) {
+								ExternalCommand ec = (ExternalCommand) gce
+										.getFaultInfo().getResource();
+								myLogger.debug("Error executing command '"
+										+ ec.getCommand() + "': "
+										+ ec.getStdErr());
+								throw new RuntimeException(
+										"Can't modify resource: " + gce);
 							}
 
 						}
 
 					} catch (Exception e) {
-						throw new RuntimeException("Can't parse json file: "
-								+ machinesFile.toString(), e);
+						throw new RuntimeException(e);
 					}
 				}
 			} finally {
