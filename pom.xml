@@ -449,4 +449,9 @@
 		</profile>	
 		</profiles>
 	
+	<scm>
+		<url>https://github.com/nesi/goldwrap</url>
+		<connection>scm:git:git://github.com/nesi/goldwrap.git</connection>
+		<developerConnection>scm:git:git@github.com:nesi/goldwrap.git</developerConnection>
+	</scm>
 </project>
