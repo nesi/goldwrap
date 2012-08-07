@@ -131,7 +131,7 @@ class GoldHelper {
 
 		log.debug("Creating account...")
 		List<String> command2 = Lists.newArrayList()
-		command2.add("gmkaccount ")
+		command2.add("gmkaccount")
 		command2.add("-p")
 		command2.add(projName)
 		command2.add("-n")
