@@ -17,6 +17,7 @@ public class Account {
 	private List<Project> projects = null;
 	private List<User> users = null;
 	private String description = "";
+	private String site = null;
 
 	public Account() {
 	}
@@ -52,6 +53,10 @@ public class Account {
 		return projects;
 	}
 
+	public String getSite() {
+		return site;
+	}
+
 	/**
 	 * The users this account is associated with.
 	 * 
@@ -71,6 +76,10 @@ public class Account {
 
 	public void setProjects(List<Project> project) {
 		this.projects = project;
+	}
+
+	public void setSite(String site) {
+		this.site = site;
 	}
 
 	public void setUsers(List<User> users) {

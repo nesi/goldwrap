@@ -5,8 +5,11 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import nz.org.nesi.goldwrap.errors.ProjectFault;
+import nz.org.nesi.goldwrap.util.GoldHelper;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
@@ -27,9 +30,13 @@ public class Project {
 	private String projectHistory = "";
 	private String principal = "";
 	private Boolean funded = false;
-	private String site = "";
 
-	private Integer accountId = -1;
+	// private String site = "";
+
+	private List<Integer> accountIds = Lists.newArrayList();
+
+	private static final Logger myLogger = LoggerFactory
+			.getLogger(Project.class);
 
 	public Project() {
 	}
@@ -38,14 +45,24 @@ public class Project {
 		this.projectId = name;
 	}
 
+	public void addAccountId(Integer id) {
+		accountIds.add(id);
+	}
+
+	public Account getAccount(String site) {
+
+		Account acc = GoldHelper.getAccount(this, site);
+		return acc;
+	}
+
 	/**
 	 * Only used internally, this one doesn't need to be specified when creating
 	 * a project.
 	 * 
 	 * @return the id of the account this project is linked to
 	 */
-	public Integer getAccountId() {
-		return accountId;
+	public List<Integer> getAccountIds() {
+		return accountIds;
 	}
 
 	/**
@@ -88,20 +105,20 @@ public class Project {
 	}
 
 	/**
-	 * The site where the project will be run.
-	 * 
-	 * @return the name of the site
-	 */
-	public String getSite() {
-		return site;
-	}
-
-	/**
 	 * A list of userIds for users who are members of this project.
 	 */
 	public List<User> getUsers() {
 		return users;
 	}
+
+	// /**
+	// * The site where the project will be run.
+	// *
+	// * @return the name of the site
+	// */
+	// public String getSite() {
+	// return site;
+	// }
 
 	/**
 	 * Whether this project is funded or not (defaults to: False).
@@ -112,8 +129,16 @@ public class Project {
 		return funded;
 	}
 
-	public void setAccountId(Integer accountId) {
-		this.accountId = accountId;
+	private List<Account> queryAccounts() {
+
+		List<Account> accs = GoldHelper.getAllAccounts(this);
+
+		return accs;
+
+	}
+
+	public void setAccountIds(List<Integer> accountIds) {
+		this.accountIds = accountIds;
 	}
 
 	public void setAllocations(List<Allocation> allocations) {
@@ -140,9 +165,9 @@ public class Project {
 		this.projectTitle = projectTitle;
 	}
 
-	public void setSite(String site) {
-		this.site = site;
-	}
+	// public void setSite(String site) {
+	// this.site = site;
+	// }
 
 	public void setUsers(List<User> users) {
 		this.users = users;
