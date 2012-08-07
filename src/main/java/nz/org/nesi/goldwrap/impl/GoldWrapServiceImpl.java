@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
@@ -478,7 +479,13 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 							continue;
 						}
 						myLogger.debug("Executing: " + line);
-						ExternalCommand ec = executeGoldCommand(line);
+
+						Iterable<String> tokens = Splitter.on(' ')
+								.trimResults().split(line);
+
+						List<String> listCommand = Lists.newArrayList(tokens);
+
+						ExternalCommand ec = executeGoldCommand(listCommand);
 
 						myLogger.debug("StdOut:\n\n{}\n\n", Joiner.on("\n")
 								.join(ec.getStdOut()));
