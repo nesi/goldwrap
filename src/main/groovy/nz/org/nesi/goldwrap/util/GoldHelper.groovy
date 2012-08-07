@@ -83,11 +83,13 @@ class GoldHelper {
 			throw new ProjectFault(p, "Could not add user "+user+" to project "+projName, "Unknown reason.", 500);
 		}
 
-		int accNr = p.getAccountId()
+		List<Integer> accNrs = p.getAccountIds()
+		for ( int accNr : accNrs ) {
 		if ( ! accNr || accNr <= 0 ) {
 			throw new ProjectFault(p, "Could not find account number for project "+projName)
 		}
 		log.debug("Adding user "+user+" to account "+accNr)
+
 
 		ExternalCommand ec2 = new ExternalCommand('gchaccount --addUser '+user+' '+accNr)
 		ec2.execute()
@@ -103,6 +105,7 @@ class GoldHelper {
 
 		if (! tmp2) {
 			throw new ProjectFault(p, "Could not add user "+user+" to account "+accNr, "Unknown reason.", 500);
+		}
 		}
 
 	}
