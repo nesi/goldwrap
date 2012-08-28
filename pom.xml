@@ -126,7 +126,7 @@
 			<plugin>
 				<groupId>org.codehaus.enunciate</groupId>
 				<artifactId>maven-enunciate-plugin</artifactId>
-				<version>1.25</version>
+				<version>${enunciate.version}</version>
 				<configuration>
 					<configFile>src/conf/enunciate.xml</configFile>
 				</configuration>
@@ -182,7 +182,7 @@
 										<artifactId>
 											maven-enunciate-plugin
 										</artifactId>
-										<versionRange>[1.25,)</versionRange>
+										<versionRange>[${enunciate.version},)</versionRange>
 										<goals>
 											<goal>assemble</goal>
 										</goals>
@@ -222,7 +222,7 @@
 		<dependency>
 			<groupId>org.codehaus.enunciate</groupId>
 			<artifactId>enunciate-rt</artifactId>
-			<version>1.25</version>
+			<version>${enunciate.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
@@ -449,4 +449,7 @@
 		</profile>	
 		</profiles>
 	
+	<properties>
+		<enunciate.version>1.25</enunciate.version>
+	</properties>
 </project>

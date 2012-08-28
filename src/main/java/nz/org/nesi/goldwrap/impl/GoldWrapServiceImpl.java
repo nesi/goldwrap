@@ -128,6 +128,23 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		String projName = proj.getProjectId();
 
+		if (StringUtils.isNotBlank(projName)) {
+			throw new ProjectFault(
+					proj,
+					"Can't create project " + projName,
+					"Project name will be created internally, you are not allowed to specify it in the request.");
+		}
+
+		List<String> indexcommand = Lists.newArrayList("ggetindex");
+		ExternalCommand ec_index = executeGoldCommand(indexcommand);
+
+		String lastProj = ec_index.getStdOut().get(0);
+
+		int lastIndex = Integer.parseInt(lastProj.substring(4));
+
+		projName = "nesi" + String.format("%06d", lastIndex + 1);
+		proj.setProjectId(projName);
+
 		proj.validate(true);
 
 		if (GoldHelper.projectExists(projName)) {
