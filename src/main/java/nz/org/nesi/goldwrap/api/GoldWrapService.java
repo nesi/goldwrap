@@ -46,11 +46,12 @@ public interface GoldWrapService {
 	 *            a list of users
 	 * @param properties
 	 *            a list of properties of this project
+	 * @return
 	 */
 	@POST
 	@Path("/projects")
 	@Consumes({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-	public void createProject(Project proj);
+	public Project createProject(Project proj);
 
 	/**
 	 * Gets all projects from the Gold database.

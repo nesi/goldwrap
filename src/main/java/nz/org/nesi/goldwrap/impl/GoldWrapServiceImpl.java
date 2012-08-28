@@ -124,7 +124,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public void createProject(Project proj) {
+	public Project createProject(Project proj) {
 
 		String projName = proj.getProjectId();
 
@@ -276,6 +276,8 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		GoldHelper.createOrModifyUsers(users);
 
 		addUsersToProject(projName, users);
+
+		return getProject(projName);
 
 	}
 
