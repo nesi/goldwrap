@@ -14,7 +14,7 @@
 {
 "name":"beatrice",
 "arch":"POWER7",
-"opsys":"AIX",
+"opsys":"LINUX",
 "description":"P7_LINUX_cluster_at_BLUEFERN"
 },
 {
