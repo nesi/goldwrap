@@ -142,7 +142,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		int lastIndex = Integer.parseInt(lastProj.substring(4));
 
-		projName = "nesi" + String.format("%06d", lastIndex + 1);
+		projName = "nesi" + String.format("%05d", lastIndex + 1);
 		proj.setProjectId(projName);
 
 		proj.validate(true);
