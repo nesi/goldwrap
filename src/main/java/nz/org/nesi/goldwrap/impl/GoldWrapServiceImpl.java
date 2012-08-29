@@ -376,9 +376,9 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		Project p = getProject(projName);
 
-		String sitename = alloc.getSite();
+		List<Machine> machines = alloc.getMachines();
 
-		Account acc = p.getAccount(sitename);
+		Account acc = p.getAccount(machines);
 
 		DateMidnight start = new DateMidnight(alloc.getStartyear(),
 				alloc.getStartmonth(), 1);

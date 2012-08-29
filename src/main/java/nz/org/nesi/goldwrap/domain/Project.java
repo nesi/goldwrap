@@ -49,9 +49,9 @@ public class Project {
 		accountIds.add(id);
 	}
 
-	public Account getAccount(String site) {
+	public Account getAccount(List<Machine> machines) {
 
-		Account acc = GoldHelper.getAccount(this, site);
+		Account acc = GoldHelper.getAccount(this, machines);
 		return acc;
 	}
 

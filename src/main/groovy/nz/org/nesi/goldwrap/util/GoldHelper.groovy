@@ -21,6 +21,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import com.google.common.base.Splitter
 import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
+import com.google.common.collect.Sets
 
 @Slf4j
 class GoldHelper {
@@ -41,29 +42,27 @@ class GoldHelper {
 	static final String SITE_KEY = "Site"
 
 	static boolean accountExists(Integer accountId) {
-		ExternalCommand gc = executeGoldCommand("glsaccount -show Id -quiet");
+		ExternalCommand gc = executeGoldCommand("glsaccount -show Id -quiet")
 
 		if (gc.getStdOut().contains(accountId.toString())) {
-			return true;
+			return true
 		} else {
-			return false;
+			return false
 		}
 	}
 	public static void addUsersToProject(String projectName, List<User> users) {
 
-				for (User user : users) {
+		for (User user : users) {
 
-					addUserToProject(projectName, user.getUserId());
-
-				}
-
-			}
+			addUserToProject(projectName, user.getUserId())
+		}
+	}
 
 	static Project addUserToProject(String projName, String user) {
 
 		if ( ! isRegistered(user) ) {
 			throw new UserFault("Can't retrieve user.", "User " + user
-			+ " not in Gold database.", 404);
+			+ " not in Gold database.", 404)
 		}
 
 		log.debug("Adding user "+user+" to project "+projName)
@@ -72,40 +71,39 @@ class GoldHelper {
 
 		Project p = getProject(projName)
 
-		User tmp = p.getUsers().findResult {
-			it ->
+		User tmp = p.getUsers().findResult { it ->
 			if ( it.getUserId().equals(user) ) {
 				return it
 			}
 		}
 
 		if (! tmp) {
-			throw new ProjectFault(p, "Could not add user "+user+" to project "+projName, "Unknown reason.", 500);
+			throw new ProjectFault(p, "Could not add user "+user+" to project "+projName, "Unknown reason.", 500)
 		}
 
 		List<Integer> accNrs = p.getAccountIds()
 		for ( int accNr : accNrs ) {
-		if ( ! accNr || accNr <= 0 ) {
-			throw new ProjectFault(p, "Could not find account number for project "+projName)
-		}
-		log.debug("Adding user "+user+" to account "+accNr)
-
-
-		ExternalCommand ec2 = new ExternalCommand('gchaccount --addUser '+user+' '+accNr)
-		ec2.execute()
-
-		// checking whether user was added to account
-		Account acc = getAccount(accNr)
-
-		User tmp2 = acc.getUsers().findResult { it ->
-			if ( it.getUserId().equals(user) ) {
-				return it
+			if ( ! accNr || accNr <= 0 ) {
+				throw new ProjectFault(p, "Could not find account number for project "+projName)
 			}
-		}
+			log.debug("Adding user "+user+" to account "+accNr)
 
-		if (! tmp2) {
-			throw new ProjectFault(p, "Could not add user "+user+" to account "+accNr, "Unknown reason.", 500);
-		}
+
+			ExternalCommand ec2 = new ExternalCommand('gchaccount --addUser '+user+' '+accNr)
+			ec2.execute()
+
+			// checking whether user was added to account
+			Account acc = getAccount(accNr)
+
+			User tmp2 = acc.getUsers().findResult { it ->
+				if ( it.getUserId().equals(user) ) {
+					return it
+				}
+			}
+
+			if (! tmp2) {
+				throw new ProjectFault(p, "Could not add user "+user+" to account "+accNr, "Unknown reason.", 500)
+			}
 		}
 
 	}
@@ -113,19 +111,53 @@ class GoldHelper {
 	public static void checkProjectname(String projectname) {
 		if (StringUtils.isBlank(projectname)) {
 			throw new ServiceException("Can't execute operation.",
-					"Projectname blank or not specified.");
+			"Projectname blank or not specified.")
 		}
 	}
 
 	public static void checkUsername(String username) {
 		if (StringUtils.isBlank(username)) {
 			throw new ServiceException("Can't execute operation.",
-					"Username blank or not specified.");
+			"Username blank or not specified.")
 		}
 	}
 
+	public static List<String> getAllMachineNames() {
 
-	private static Account createAccount(Project proj, String site) {
+		List<Machine> allMachines = getAllMachines()
+
+		List<String> names = Lists.newLinkedList()
+
+		for (Machine m : allMachines) {
+			names.add(m.getName())
+		}
+		return names
+
+	}
+
+	public static String generateMachinesString(Collection<Machine> machines) {
+
+		List<String> allMachineNames = getAllMachineNames()
+
+		SortedSet<String> string = Sets.newTreeSet()
+
+		for ( Machine m : machines ) {
+
+			if ( ! allMachineNames.contains(m.getName())) {
+				throw new MachineFault(m, "Machine "+m.getName()+" not found.", "Machine "+m.getName()+" not in Gold database.")
+			}
+
+			string.add(m.getName())
+		}
+
+		return StringUtils.join(string, ",")
+
+	}
+
+
+	private static Account createAccount(Project proj, List<Machine> machines) {
+
+		String machinesString = generateMachinesString(machines)
 
 		String projName = proj.getProjectId()
 
@@ -135,9 +167,9 @@ class GoldHelper {
 		command2.add("-p")
 		command2.add(projName)
 		command2.add("-n")
-		command2.add(projName+"_"+site)
-		command2.add("-X")
-		command2.add("Site="+site)
+		command2.add(projName+"_"+machinesString)
+		command2.add("-m")
+		command2.add(machinesString)
 
 		ExternalCommand ec2 = executeGoldCommand(command2)
 
@@ -149,108 +181,108 @@ class GoldHelper {
 			"Could not create associated account for some reason.")
 		}
 
-			log.debug("Parsing output to find out account number.")
-			try {
-				String stdout = ec2.getStdOut().get(0)
-				Iterable<String> tokens = Splitter.on(' ').split(stdout)
-				Integer accNr = Integer.parseInt(Iterables.getLast(tokens))
+		log.debug("Parsing output to find out account number.")
+		try {
+			String stdout = ec2.getStdOut().get(0)
+			Iterable<String> tokens = Splitter.on(' ').split(stdout)
+			Integer accNr = Integer.parseInt(Iterables.getLast(tokens))
 
-				proj.addAccountId(accNr)
-				// remove ANY user
-				log.debug("Removing ANY user from account {}", accNr)
-				String removeAnyCommand = "gchaccount --delUsers ANY " + accNr
-				ExternalCommand removeCommand = executeGoldCommand(removeAnyCommand)
-				modifyProject(projName, proj)
-				return getAccount(accNr)
-			} catch (Exception e) {
-				e.printStackTrace()
-				throw new ProjectFault(proj, "Could not create account for project "+proj.getProjectId()+" and site "+site,
-				"Could not parse account nr for project.", e)
-			}
-
-
+			proj.addAccountId(accNr)
+			// remove ANY user
+			log.debug("Removing ANY user from account {}", accNr)
+			String removeAnyCommand = "gchaccount --delUsers ANY " + accNr
+			ExternalCommand removeCommand = executeGoldCommand(removeAnyCommand)
+			modifyProject(projName, proj)
+			return getAccount(accNr)
+		} catch (Exception e) {
+			e.printStackTrace()
+			throw new ProjectFault(proj, "Could not create account for project "+proj.getProjectId()+" and machines "+machinesString,
+			"Could not parse account nr for project.", e)
 		}
+
+
+	}
 
 	public static void createOrModifyUsers(List<User> users) {
 		for (User user : users) {
 			if (GoldHelper.isRegistered(user.getUserId())) {
-				log.debug("Potentially modifying user " + user.getUserId());
-				modifyUser(user.getUserId(), user);
+				log.debug("Potentially modifying user " + user.getUserId())
+				modifyUser(user.getUserId(), user)
 			} else {
-				log.debug("Creating user: " + user.getUserId());
-				createUser(user);
+				log.debug("Creating user: " + user.getUserId())
+				createUser(user)
 			}
 		}
 	}
 
 	public static void createUser(User user) {
 
-				user.validate(false);
+		user.validate(false)
 
-				String username = user.getUserId();
-				String phone = user.getPhone();
-				String email = user.getEmail();
+		String username = user.getUserId()
+		String phone = user.getPhone()
+		String email = user.getEmail()
 
-				String middlename = user.getMiddleName();
-				String fullname = user.getFirstName();
-				if (StringUtils.isNotBlank(middlename)) {
-					fullname = fullname + " " + middlename;
-				}
-				fullname = fullname + " " + user.getLastName();
+		String middlename = user.getMiddleName()
+		String fullname = user.getFirstName()
+		if (StringUtils.isNotBlank(middlename)) {
+			fullname = fullname + " " + middlename
+		}
+		fullname = fullname + " " + user.getLastName()
 
-				String institution = user.getInstitution();
+		String institution = user.getInstitution()
 
-				if (isRegistered(username)) {
-					throw new UserFault("Can't create user.", "User " + username
-							+ " already in Gold database.", 409);
-				}
+		if (isRegistered(username)) {
+			throw new UserFault("Can't create user.", "User " + username
+			+ " already in Gold database.", 409)
+		}
 
-				String desc = JSONHelpers.convertToJSONString(user);
+		String desc = JSONHelpers.convertToJSONString(user)
 
-				List<String> command = Lists.newArrayList("gmkuser");
-				if (StringUtils.isNotBlank(fullname)) {
-					command.add("-n");
-					command.add(fullname);
-				}
-				if (StringUtils.isNotBlank(email)) {
-					command.add("-E");
-					command.add(email);
-				}
-				if (StringUtils.isNotBlank(phone)) {
-					command.add("-F");
-					command.add(phone);
-				}
+		List<String> command = Lists.newArrayList("gmkuser")
+		if (StringUtils.isNotBlank(fullname)) {
+			command.add("-n")
+			command.add(fullname)
+		}
+		if (StringUtils.isNotBlank(email)) {
+			command.add("-E")
+			command.add(email)
+		}
+		if (StringUtils.isNotBlank(phone)) {
+			command.add("-F")
+			command.add(phone)
+		}
 
-				command.add("-d");
-				command.add(desc);
-				command.add(username);
+		command.add("-d")
+		command.add(desc)
+		command.add(username)
 
-				ExternalCommand ec = executeGoldCommand(command);
+		ExternalCommand ec = executeGoldCommand(command)
 
-				if (!GoldHelper.isRegistered(username)) {
-					throw new UserFault(user, "Can't create user.", "Unknown reason");
-				}
+		if (!GoldHelper.isRegistered(username)) {
+			throw new UserFault(user, "Can't create user.", "Unknown reason")
+		}
 
-			}
+	}
 
 	private static ExternalCommand executeGoldCommand(List<String> command) {
-		ExternalCommand gc = new ExternalCommand(command);
-		gc.execute();
-		gc.verify();
-		return gc;
+		ExternalCommand gc = new ExternalCommand(command)
+		gc.execute()
+		gc.verify()
+		return gc
 	}
 
 	private static ExternalCommand executeGoldCommand(String command) {
-		ExternalCommand gc = new ExternalCommand(command);
-		gc.execute();
-		gc.verify();
-		return gc;
+		ExternalCommand gc = new ExternalCommand(command)
+		gc.execute()
+		gc.verify()
+		return gc
 	}
 
 	public static Account getAccount(Integer accountId) {
 
 		if (! accountExists(accountId)) {
-			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404);
+			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404)
 		}
 
 		ExternalCommand ec = new ExternalCommand('glsaccount -A --raw '+accountId)
@@ -258,11 +290,11 @@ class GoldHelper {
 		def map = parseGLSOutput(ec.getStdOut())
 
 		if ( map.size() == 0 ) {
-			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404);
+			throw new AccountFault("Account " + accountId + " not found.", "Account "+accountId+" does not exist in Gold.", 404)
 		}
 
 		if ( map.size() > 1 ) {
-			throw new ProjectFault("Multiple accounts with id " + accountId + " found.", "Internal error", 500);
+			throw new ProjectFault("Multiple accounts with id " + accountId + " found.", "Internal error", 500)
 		}
 
 		String key = map.keySet().iterator().next()
@@ -270,7 +302,7 @@ class GoldHelper {
 
 		log.debug('Creating account {}', key)
 
-		Account acc = new Account(accountId);
+		Account acc = new Account(accountId)
 
 		def usersString = value[USERS]
 		def users = usersString.split (',') as List
@@ -318,20 +350,28 @@ class GoldHelper {
 		return acc
 	}
 
-	public static Account getAccount(Project project, String site) {
+	public static Account getAccount(Project project, List<Machine> machines) {
+
+		String machinesString = generateMachinesString(machines)
 
 		for (Account acc : getAllAccounts(project)) {
 			Integer id = acc.getAccountId()
 
 			if (project.getAccountIds().contains(id)) {
-				return acc;
+
+				List<String> accountMachinesString = generateMachinesString(acc.getMachines())
+
+				if ( accountMachinesString.equals(machinesString) ) {
+
+					return acc
+				}
 			}
 		}
 
-		log.debug("No account for site '{}' in project '{}', creating one...",
-		site, project.getProjectId());
+		log.debug("No account for machines '{}' in project '{}', creating one...",
+		machinesString, project.getProjectId())
 
-		Account acc = createAccount(project, site)
+		Account acc = createAccount(project, machines)
 		return acc
 	}
 
@@ -358,9 +398,9 @@ class GoldHelper {
 
 			// we're not filling in the values, we are only interested in the account id
 			Account a = new Account(id)
-//			a.setDescription(desc)
-//			a.setSite(site)
-//			a.setP
+			//			a.setDescription(desc)
+			//			a.setSite(site)
+			//			a.setP
 			accounts.add(a)
 		}
 
@@ -422,7 +462,7 @@ class GoldHelper {
 
 			def desc = value[DESCRIPTION_KEY]
 
-			Project proj;
+			Project proj
 			try {
 				proj = JSONHelpers.convertFromJSONString(desc, Project.class)
 			} catch (all) {
@@ -511,7 +551,7 @@ class GoldHelper {
 	public static Project getProject(String projName) {
 
 		if (! projectExists(projName)) {
-			throw new ProjectFault("Project " + projName + " not found.", "Project "+projName+" does not exist in Gold.", 404);
+			throw new ProjectFault("Project " + projName + " not found.", "Project "+projName+" does not exist in Gold.", 404)
 		}
 
 		ExternalCommand ec = new ExternalCommand('glsproject -A --raw '+projName)
@@ -519,11 +559,11 @@ class GoldHelper {
 		def map = parseGLSOutput(ec.getStdOut())
 
 		if ( map.size() == 0 ) {
-			throw new ProjectFault("Project " + projName + " not found.", "Project "+projName+" does not exist in Gold.", 404);
+			throw new ProjectFault("Project " + projName + " not found.", "Project "+projName+" does not exist in Gold.", 404)
 		}
 
 		if ( map.size() > 1 ) {
-			throw new ProjectFault("Multiple projects with name " + projName + " found.", "Internal error", 500);
+			throw new ProjectFault("Multiple projects with name " + projName + " found.", "Internal error", 500)
 		}
 
 		String key = map.keySet().iterator().next()
@@ -535,11 +575,11 @@ class GoldHelper {
 		def desc = value[DESCRIPTION_KEY]
 
 
-		Project proj;
+		Project proj
 		try {
 			proj = JSONHelpers.convertFromJSONString(desc, Project.class)
 		} catch (all) {
-			all.printStackTrace();
+			all.printStackTrace()
 			throw new ProjectFault("Can't create project "+key+".", "Can't read description field for project "+key, 500)
 		}
 
@@ -570,7 +610,7 @@ class GoldHelper {
 
 		if (! isRegistered(username) ) {
 			throw new UserFault("Can't retrieve user.", "User " + username
-			+ " not in Gold database.", 404);
+			+ " not in Gold database.", 404)
 		}
 
 		def projects = getAllProjects().findAll() { proj ->
@@ -583,7 +623,7 @@ class GoldHelper {
 	public static List<Project> getProjectsWhereUserIsPrincipal(String username) {
 		if (! isRegistered(username) ) {
 			throw new UserFault("Can't retrieve user.", "User " + username
-			+ " not in Gold database.", 404);
+			+ " not in Gold database.", 404)
 		}
 
 		def projects = getAllProjects().findAll() { proj ->
@@ -598,18 +638,18 @@ class GoldHelper {
 	}
 	static User getUser(String username) {
 		ExternalCommand ec = executeGoldCommand("glsuser -show Description "
-		+ username + " --quiet");
+		+ username + " --quiet")
 
 		if (ec.getStdOut().size() == 0) {
 			throw new UserFault("Can't retrieve user.", "User " + username
-			+ " not in Gold database.", 404);
+			+ " not in Gold database.", 404)
 		}
 
-		User u = JSONHelpers.extractObject(User.class, ec.getStdOut().get(0));
+		User u = JSONHelpers.extractObject(User.class, ec.getStdOut().get(0))
 		if (!username.equals(u.getUserId())) {
 			throw new ServiceException("Internal error",
 			"Gold userId and userId in description don't match for user '"
-			+ username + "'");
+			+ username + "'")
 		}
 		u
 	}
@@ -624,24 +664,24 @@ class GoldHelper {
 
 	static boolean isRegistered(String username) {
 
-		ExternalCommand gc = executeGoldCommand("glsuser -show Name -quiet");
+		ExternalCommand gc = executeGoldCommand("glsuser -show Name -quiet")
 
 		if (gc.getStdOut().contains(username)) {
-			return true;
+			return true
 		} else {
-			return false;
+			return false
 		}
 	}
 
 
 	static boolean machineExists(String machName) {
 
-		ExternalCommand gc = executeGoldCommand("glsmachine -show Name -quiet");
+		ExternalCommand gc = executeGoldCommand("glsmachine -show Name -quiet")
 
 		if (gc.getStdOut().contains(machName)) {
-			return true;
+			return true
 		} else {
-			return false;
+			return false
 		}
 	}
 
@@ -654,158 +694,158 @@ class GoldHelper {
 
 	public static Project modifyProject(String projName, Project project) {
 
-				checkProjectname(projName);
+		checkProjectname(projName)
 
-				if (StringUtils.isNotBlank(project.getProjectId())
-						&& !projName.equals(project.getProjectId())) {
-					throw new ProjectFault(project, "Can't modify project.",
-							"Project name can't be changed.");
-				}
+		if (StringUtils.isNotBlank(project.getProjectId())
+		&& !projName.equals(project.getProjectId())) {
+			throw new ProjectFault(project, "Can't modify project.",
+			"Project name can't be changed.")
+		}
 
-				if (!projectExists(projName)) {
-					throw new ProjectFault("Can't modify project.", "Project "
-							+ projName + " not in Gold database.", 404);
-				}
+		if (!projectExists(projName)) {
+			throw new ProjectFault("Can't modify project.", "Project "
+			+ projName + " not in Gold database.", 404)
+		}
 
-				String principal = project.getPrincipal();
-				if (StringUtils.isNotBlank(principal)) {
-					try {
-						User princ = getUser(principal);
-					} catch (Exception e) {
-						throw new ProjectFault(project, "Can't create project "
-								+ projName, "Principal '" + principal
-								+ "' does not exist in Gold.");
-					}
-				}
-
-				List<User> users = project.getUsers();
-				if (users != null) {
-					users = Lists.newArrayList(users);
-				} else {
-					users = Lists.newArrayList();
-				}
-
-				for (User user : users) {
-					String userId = user.getUserId();
-					if (StringUtils.isBlank(userId)) {
-						throw new ProjectFault(project, "Can't modify project "
-								+ projName, "Userid not specified.");
-					}
-
-				}
-
-				project.validate(false);
-
-				Project goldProject = getProject(projName);
-				try {
-					BeanHelpers.merge(goldProject, project);
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw new ProjectFault(project, "Can't modify project " + projName,
-							"Can't merge new properties: " + e.getLocalizedMessage());
-				}
-
-				// we don't want to store userdata in the description
-				goldProject.setUsers(new ArrayList<User>());
-
-				List<String> command = Lists.newArrayList("gchproject");
-				String desc = JSONHelpers.convertToJSONString(goldProject);
-				command.add("-d");
-				command.add(desc);
-
-				if (goldProject.isFunded()) {
-					command.add("-X");
-					command.add("Funded=True");
-				} else {
-					command.add("-X");
-					command.add("Funded=False");
-				}
-
-				// String site = goldProject.getSite();
-				// if (StringUtils.isNotBlank(site)) {
-				// command.add("-X");
-				// command.add("Site=" + site);
-				// }
-
-				command.add(projName);
-
-				ExternalCommand ec = executeGoldCommand(command);
-
-				// ensuring users are present
-				createOrModifyUsers(users);
-
-				addUsersToProject(projName, users);
-
-				Project p = getProject(projName);
-				return p;
-
+		String principal = project.getPrincipal()
+		if (StringUtils.isNotBlank(principal)) {
+			try {
+				User princ = getUser(principal)
+			} catch (Exception e) {
+				throw new ProjectFault(project, "Can't create project "
+				+ projName, "Principal '" + principal
+				+ "' does not exist in Gold.")
 			}
+		}
+
+		List<User> users = project.getUsers()
+		if (users != null) {
+			users = Lists.newArrayList(users)
+		} else {
+			users = Lists.newArrayList()
+		}
+
+		for (User user : users) {
+			String userId = user.getUserId()
+			if (StringUtils.isBlank(userId)) {
+				throw new ProjectFault(project, "Can't modify project "
+				+ projName, "Userid not specified.")
+			}
+
+		}
+
+		project.validate(false)
+
+		Project goldProject = getProject(projName)
+		try {
+			BeanHelpers.merge(goldProject, project)
+		} catch (Exception e) {
+			e.printStackTrace()
+			throw new ProjectFault(project, "Can't modify project " + projName,
+			"Can't merge new properties: " + e.getLocalizedMessage())
+		}
+
+		// we don't want to store userdata in the description
+		goldProject.setUsers(new ArrayList<User>())
+
+		List<String> command = Lists.newArrayList("gchproject")
+		String desc = JSONHelpers.convertToJSONString(goldProject)
+		command.add("-d")
+		command.add(desc)
+
+		if (goldProject.isFunded()) {
+			command.add("-X")
+			command.add("Funded=True")
+		} else {
+			command.add("-X")
+			command.add("Funded=False")
+		}
+
+		// String site = goldProject.getSite();
+		// if (StringUtils.isNotBlank(site)) {
+		// command.add("-X");
+		// command.add("Site=" + site);
+		// }
+
+		command.add(projName)
+
+		ExternalCommand ec = executeGoldCommand(command)
+
+		// ensuring users are present
+		createOrModifyUsers(users)
+
+		addUsersToProject(projName, users)
+
+		Project p = getProject(projName)
+		return p
+
+	}
 
 	public static void modifyUser(String username, User user) {
 
-				if (StringUtils.isBlank(username)) {
-					throw new UserFault(user, "Can't modify user.",
-							"Username field can't be blank.");
-				}
+		if (StringUtils.isBlank(username)) {
+			throw new UserFault(user, "Can't modify user.",
+			"Username field can't be blank.")
+		}
 
-				if (StringUtils.isNotBlank(user.getUserId())
-						&& !username.equals(user.getUserId())) {
-					throw new UserFault(user, "Can't modify user.",
-							"Username can't be changed.");
-				}
+		if (StringUtils.isNotBlank(user.getUserId())
+		&& !username.equals(user.getUserId())) {
+			throw new UserFault(user, "Can't modify user.",
+			"Username can't be changed.")
+		}
 
-				if (!isRegistered(username)) {
-					throw new UserFault("Can't modify user.", "User " + username
-							+ " not in Gold database.", 404);
-				}
+		if (!isRegistered(username)) {
+			throw new UserFault("Can't modify user.", "User " + username
+			+ " not in Gold database.", 404)
+		}
 
-				User goldUser = getUser(username);
-				try {
-					BeanHelpers.merge(goldUser, user);
-				} catch (Exception e) {
-					throw new UserFault(goldUser, "Can't merge new user into old one.",
-							e.getLocalizedMessage());
-				}
+		User goldUser = getUser(username)
+		try {
+			BeanHelpers.merge(goldUser, user)
+		} catch (Exception e) {
+			throw new UserFault(goldUser, "Can't merge new user into old one.",
+			e.getLocalizedMessage())
+		}
 
-				goldUser.validate(false);
+		goldUser.validate(false)
 
-				String middlename = goldUser.getMiddleName();
-				String fullname = goldUser.getFirstName();
-				if (StringUtils.isNotBlank(middlename)) {
-					fullname = fullname + " " + middlename;
-				}
-				fullname = fullname + " " + goldUser.getLastName();
-				String phone = goldUser.getPhone();
-				String institution = goldUser.getInstitution();
-				String email = goldUser.getEmail();
+		String middlename = goldUser.getMiddleName()
+		String fullname = goldUser.getFirstName()
+		if (StringUtils.isNotBlank(middlename)) {
+			fullname = fullname + " " + middlename
+		}
+		fullname = fullname + " " + goldUser.getLastName()
+		String phone = goldUser.getPhone()
+		String institution = goldUser.getInstitution()
+		String email = goldUser.getEmail()
 
-				String desc = JSONHelpers.convertToJSONString(goldUser);
+		String desc = JSONHelpers.convertToJSONString(goldUser)
 
-				List<String> command = Lists.newArrayList("gchuser");
-				if (StringUtils.isNotBlank(fullname)) {
-					command.add("-n");
-					command.add("fullname");
-				}
-				if (StringUtils.isNotBlank(email)) {
-					command.add("-E");
-					command.add(email);
-				}
-				if (StringUtils.isNotBlank(phone)) {
-					command.add("-F");
-					command.add(phone);
-				}
-				command.add("-d");
-				command.add(desc);
-				command.add(username);
+		List<String> command = Lists.newArrayList("gchuser")
+		if (StringUtils.isNotBlank(fullname)) {
+			command.add("-n")
+			command.add("fullname")
+		}
+		if (StringUtils.isNotBlank(email)) {
+			command.add("-E")
+			command.add(email)
+		}
+		if (StringUtils.isNotBlank(phone)) {
+			command.add("-F")
+			command.add(phone)
+		}
+		command.add("-d")
+		command.add(desc)
+		command.add(username)
 
-				ExternalCommand ec = executeGoldCommand(command);
+		ExternalCommand ec = executeGoldCommand(command)
 
-				if (!GoldHelper.isRegistered(username)) {
-					throw new UserFault(goldUser, "Can't create user.",
-							"Unknown reason");
-				}
+		if (!GoldHelper.isRegistered(username)) {
+			throw new UserFault(goldUser, "Can't create user.",
+			"Unknown reason")
+		}
 
-			}
+	}
 
 
 	static def parseGLSOutput(def output) {
@@ -820,8 +860,8 @@ class GoldHelper {
 		def keyList = null
 		try {
 			keyList = Lists.newArrayList(
-		Splitter.on('|').trimResults().split(output.get(0)))
-		output.remove(0)
+			Splitter.on('|').trimResults().split(output.get(0)))
+			output.remove(0)
 		} catch (IndexOutOfBoundsException ioobe) {
 			log.debug('No data')
 			return [:]
@@ -842,14 +882,14 @@ class GoldHelper {
 		result
 	}
 
-		static boolean projectExists(String projName) {
+	static boolean projectExists(String projName) {
 
-			ExternalCommand gc = executeGoldCommand("glsproject -show Name -quiet");
+		ExternalCommand gc = executeGoldCommand("glsproject -show Name -quiet")
 
-			if (gc.getStdOut().contains(projName)) {
-				return true;
-			} else {
-				return false;
-			}
+		if (gc.getStdOut().contains(projName)) {
+			return true
+		} else {
+			return false
 		}
 	}
+}

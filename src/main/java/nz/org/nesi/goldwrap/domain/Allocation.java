@@ -1,10 +1,10 @@
 package nz.org.nesi.goldwrap.domain;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 import nz.org.nesi.goldwrap.errors.AllocationFault;
-
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Class to model Allocations.
@@ -21,7 +21,7 @@ public class Allocation {
 	private Integer startmonth = -1;
 	private Integer startyear = -1;
 
-	private String site = null;
+	private List<Machine> machines = null;
 
 	/**
 	 * Total allocation amount for all rechargemonths specified.
@@ -56,8 +56,8 @@ public class Allocation {
 	 * 
 	 * @return the name of the site
 	 */
-	public String getSite() {
-		return site;
+	public List<Machine> getMachines() {
+		return machines;
 	}
 
 	/**
@@ -90,8 +90,8 @@ public class Allocation {
 		this.rechargemonths = rechargemonths;
 	}
 
-	public void setSite(String site) {
-		this.site = site;
+	public void setMachines(List<Machine> machines) {
+		this.machines = machines;
 	}
 
 	public void setStartmonth(Integer startmonth) {
@@ -128,9 +128,9 @@ public class Allocation {
 					"startyear be > 2011");
 		}
 
-		if (StringUtils.isBlank(site)) {
+		if (machines == null || machines.size() == 0) {
 			throw new AllocationFault(this, "Invalid allocation.",
-					"Site must be specified");
+					"No machine(s) specified");
 		}
 
 		if (!fullCheck) {

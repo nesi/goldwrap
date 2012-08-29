@@ -16,6 +16,21 @@ public class Account {
 	private Integer accountId = -1;
 	private List<Project> projects = null;
 	private List<User> users = null;
+	private List<Machine> machines = null;
+
+	/**
+	 * Returns all machines that are associated with this account.
+	 * 
+	 * @return the machines
+	 */
+	public List<Machine> getMachines() {
+		return machines;
+	}
+
+	public void setMachines(List<Machine> machines) {
+		this.machines = machines;
+	}
+
 	private String description = "";
 	private String site = null;
 
