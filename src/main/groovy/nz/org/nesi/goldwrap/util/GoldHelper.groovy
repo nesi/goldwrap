@@ -359,11 +359,15 @@ class GoldHelper {
 
 			if (project.getAccountIds().contains(id)) {
 
+				try {
 				List<String> accountMachinesString = generateMachinesString(acc.getMachines())
 
 				if ( accountMachinesString.equals(machinesString) ) {
 
 					return acc
+				}
+				} catch (Exception e) {
+
 				}
 			}
 		}
@@ -398,6 +402,19 @@ class GoldHelper {
 
 			// we're not filling in the values, we are only interested in the account id
 			Account a = new Account(id)
+			if (StringUtils.isNotBlank(machines) ) {
+				List<Machine> machinesForAccount = Lists.newLinkedList()
+				List<String> machinesStrings = machines.split(",")
+				for ( String machineName : machinesStrings ) {
+					try {
+					Machine m = getMachine(machineName)
+					machinesForAccount.add(m)
+					} catch (Exception e) {
+						log.debug("Can't find machine "+machineName+". Ignoring it...")
+					}
+				}
+				a.setMachines(machinesForAccount)
+			}
 			//			a.setDescription(desc)
 			//			a.setSite(site)
 			//			a.setP
