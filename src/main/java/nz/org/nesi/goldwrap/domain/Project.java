@@ -205,7 +205,7 @@ public class Project {
 		if (StringUtils.isNotBlank(projectData)) {
 			if (projectData.contains("\"")) {
 				throw new ProjectFault(this, "Invalid Project.",
-						"projectData field value can't contain \".");
+						"projectData field value can't contain \" character.");
 			}
 		}
 
