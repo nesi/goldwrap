@@ -788,7 +788,7 @@ class GoldHelper {
 			command.add("-X")
 			command.add("Class="+clazz)
 
-			if ( "Research".equals(clazz) ) {
+			if ( clazz.startsWith("Research") ) {
 					command.add("-X")
 					command.add("Funded=True")
 				} else {
