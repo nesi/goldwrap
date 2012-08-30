@@ -750,6 +750,14 @@ class GoldHelper {
 
 		}
 
+		List<Machine> machines = project.getMachines()
+		String machinesString = null
+
+		if ( machines != null ) {
+			machinesString = generateMachinesString(machines)
+		}
+
+
 		project.validate(false)
 
 		Project goldProject = getProject(projName)
@@ -777,11 +785,11 @@ class GoldHelper {
 			command.add("Funded=False")
 		}
 
-		// String site = goldProject.getSite();
-		// if (StringUtils.isNotBlank(site)) {
-		// command.add("-X");
-		// command.add("Site=" + site);
-		// }
+		if ( StringUtils.isNotBlank(machinesString)) {
+			command.add("-X")
+			command.add("Machines="+machinesString)
+		}
+
 
 		command.add(projName)
 

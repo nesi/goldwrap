@@ -391,9 +391,9 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			end = start.plusMonths(alloc.getRechargemonths()).minusDays(1);
 			myLogger.debug("deposit " + (i + 1) + " for period: {} - {}",
 					start.toString(), end.toString());
-			List<String> command = Lists.newArrayList("gdeposit");
-			command.add("-a");
-			command.add(acc.getAccountId().toString());
+			List<String> depositcommand = Lists.newArrayList("gdeposit");
+			depositcommand.add("-a");
+			depositcommand.add(acc.getAccountId().toString());
 
 			String startString = start.getYear() + "-"
 					+ String.format("%02d", start.getMonthOfYear()) + "-"
@@ -402,21 +402,21 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 					+ String.format("%02d", end.getMonthOfYear()) + "-"
 					+ String.format("%02d", end.getDayOfMonth());
 
-			command.add("-s");
-			command.add(startString);
-			command.add("-e");
-			command.add(endString);
-			command.add("-z");
+			depositcommand.add("-s");
+			depositcommand.add(startString);
+			depositcommand.add("-e");
+			depositcommand.add(endString);
+			depositcommand.add("-z");
 
 			Integer allocationPerPeriod = alloc.getAllocation()
 					/ alloc.getRecharge();
 
-			command.add(allocationPerPeriod.toString());
-			command.add("-L");
-			command.add(new Integer(allocationPerPeriod * 3).toString());
-			command.add("-h");
+			depositcommand.add(allocationPerPeriod.toString());
+			depositcommand.add("-L");
+			depositcommand.add(new Integer(allocationPerPeriod * 3).toString());
+			depositcommand.add("-h");
 
-			ExternalCommand ec = executeGoldCommand(command);
+			ExternalCommand ec = executeGoldCommand(depositcommand);
 
 			if (ec.getExitCode() != 0) {
 				throw new AllocationFault(alloc, "Could not add allocation.",
@@ -424,7 +424,13 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			}
 
 			start = end.plusDays(1);
+
 		}
+
+		p.setMachines(machines);
+
+		modifyProject(projName, p);
+
 	}
 
 	public synchronized Machine getMachine(String machineName) {

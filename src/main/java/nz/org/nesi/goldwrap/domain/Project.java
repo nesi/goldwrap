@@ -30,6 +30,7 @@ public class Project {
 	private String projectHistory = "";
 	private String principal = "";
 	private Boolean funded = false;
+	private List<Machine> machines = Lists.newArrayList();
 
 	// private String site = "";
 
@@ -72,6 +73,10 @@ public class Project {
 		return allocations;
 	}
 
+	public List<Machine> getMachines() {
+		return machines;
+	}
+
 	/**
 	 * The username of the principal investigator - this is the Tuakiri hash.
 	 * 
@@ -111,15 +116,6 @@ public class Project {
 		return users;
 	}
 
-	// /**
-	// * The site where the project will be run.
-	// *
-	// * @return the name of the site
-	// */
-	// public String getSite() {
-	// return site;
-	// }
-
 	/**
 	 * Whether this project is funded or not (defaults to: False).
 	 * 
@@ -128,6 +124,15 @@ public class Project {
 	public Boolean isFunded() {
 		return funded;
 	}
+
+	// /**
+	// * The site where the project will be run.
+	// *
+	// * @return the name of the site
+	// */
+	// public String getSite() {
+	// return site;
+	// }
 
 	private List<Account> queryAccounts() {
 
@@ -147,6 +152,10 @@ public class Project {
 
 	public void setFunded(Boolean funded) {
 		this.funded = funded;
+	}
+
+	public void setMachines(List<Machine> machines) {
+		this.machines = machines;
 	}
 
 	public void setPrincipal(String principal) {
