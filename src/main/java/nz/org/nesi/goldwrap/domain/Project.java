@@ -31,8 +31,8 @@ public class Project {
 	private String principal = "";
 	private List<Machine> machines = Lists.newArrayList();
 
-	private String clazz = null;
-	private String projectData = null;
+	private String clazz = "";
+	private String projectData = "";
 
 	// private String site = "";
 
