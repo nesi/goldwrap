@@ -6,6 +6,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import nz.org.nesi.goldwrap.errors.AllocationFault;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.collect.ImmutableList;
+
 /**
  * Class to model Allocations.
  * 
@@ -15,11 +19,17 @@ import nz.org.nesi.goldwrap.errors.AllocationFault;
 @XmlRootElement
 public class Allocation {
 
+	public final static List<String> CLASSES = ImmutableList.of(
+			"ProposalDevelopment", "ResearchFunded", "ResearchUnfunded",
+			"Private", "Collaborator");
+
 	private Integer allocation = -1;
 	private Integer rechargemonths = -1;
 	private Integer recharge = -1;
 	private Integer startmonth = -1;
 	private Integer startyear = -1;
+
+	private String clazz = null;
 
 	private List<Machine> machines = null;
 
@@ -30,6 +40,19 @@ public class Allocation {
 	 */
 	public Integer getAllocation() {
 		return allocation;
+	}
+
+	public String getClazz() {
+		return clazz;
+	}
+
+	/**
+	 * The site where the allocation is to be used.
+	 * 
+	 * @return the name of the site
+	 */
+	public List<Machine> getMachines() {
+		return machines;
 	}
 
 	/**
@@ -49,15 +72,6 @@ public class Allocation {
 	 */
 	public Integer getRechargemonths() {
 		return rechargemonths;
-	}
-
-	/**
-	 * The site where the allocation is to be used.
-	 * 
-	 * @return the name of the site
-	 */
-	public List<Machine> getMachines() {
-		return machines;
 	}
 
 	/**
@@ -82,16 +96,20 @@ public class Allocation {
 		this.allocation = allocation;
 	}
 
+	public void setClazz(String clazz) {
+		this.clazz = clazz;
+	}
+
+	public void setMachines(List<Machine> machines) {
+		this.machines = machines;
+	}
+
 	public void setRecharge(Integer recharge) {
 		this.recharge = recharge;
 	}
 
 	public void setRechargemonths(Integer rechargemonths) {
 		this.rechargemonths = rechargemonths;
-	}
-
-	public void setMachines(List<Machine> machines) {
-		this.machines = machines;
 	}
 
 	public void setStartmonth(Integer startmonth) {
@@ -103,6 +121,16 @@ public class Allocation {
 	}
 
 	public void validate(boolean fullCheck) {
+
+		if (StringUtils.isBlank(clazz)) {
+			throw new AllocationFault(this, "Invalid Allocation.",
+					"'clazz' must be specified");
+		}
+
+		if (!CLASSES.contains(clazz)) {
+			throw new AllocationFault(this, "Invalid Allocation.", clazz
+					+ " not a valid clazz");
+		}
 
 		if (allocation < 0) {
 			throw new AllocationFault(this, "Invalid Allocation.",

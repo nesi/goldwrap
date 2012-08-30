@@ -206,14 +206,6 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		command.add("--createAccount=False");
 
-		if (proj.isFunded()) {
-			command.add("-X");
-			command.add("Funded=True");
-		} else {
-			command.add("-X");
-			command.add("Funded=False");
-		}
-
 		// String site = proj.getSite();
 		// if (StringUtils.isNotBlank(site)) {
 		// command.add("-X");
@@ -376,8 +368,12 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		alloc.validate(false);
 
 		Project p = getProject(projName);
-
 		List<Machine> machines = alloc.getMachines();
+
+		p.setMachines(machines);
+		p.setClazz(alloc.getClazz());
+
+		p.validate(true);
 
 		Account acc = p.getAccount(machines);
 
@@ -416,6 +412,10 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			depositcommand.add(new Integer(allocationPerPeriod * 3).toString());
 			depositcommand.add("-h");
 
+			// String clazz = alloc.getClazz();
+			// depositcommand.add("-X");
+			// depositcommand.add("Class=" + clazz);
+
 			ExternalCommand ec = executeGoldCommand(depositcommand);
 
 			if (ec.getExitCode() != 0) {
@@ -426,8 +426,6 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 			start = end.plusDays(1);
 
 		}
-
-		p.setMachines(machines);
 
 		modifyProject(projName, p);
 

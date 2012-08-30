@@ -29,8 +29,9 @@ public class Project {
 	private List<Allocation> allocations = Lists.newArrayList();
 	private String projectHistory = "";
 	private String principal = "";
-	private Boolean funded = false;
 	private List<Machine> machines = Lists.newArrayList();
+
+	private String clazz = null;
 
 	// private String site = "";
 
@@ -71,6 +72,10 @@ public class Project {
 	 */
 	public List<Allocation> getAllocations() {
 		return allocations;
+	}
+
+	public String getClazz() {
+		return clazz;
 	}
 
 	public List<Machine> getMachines() {
@@ -116,13 +121,12 @@ public class Project {
 		return users;
 	}
 
-	/**
-	 * Whether this project is funded or not (defaults to: False).
-	 * 
-	 * @return whether funded or not
-	 */
-	public Boolean isFunded() {
-		return funded;
+	private List<Account> queryAccounts() {
+
+		List<Account> accs = GoldHelper.getAllAccounts(this);
+
+		return accs;
+
 	}
 
 	// /**
@@ -134,14 +138,6 @@ public class Project {
 	// return site;
 	// }
 
-	private List<Account> queryAccounts() {
-
-		List<Account> accs = GoldHelper.getAllAccounts(this);
-
-		return accs;
-
-	}
-
 	public void setAccountIds(List<Integer> accountIds) {
 		this.accountIds = accountIds;
 	}
@@ -150,8 +146,8 @@ public class Project {
 		this.allocations = allocations;
 	}
 
-	public void setFunded(Boolean funded) {
-		this.funded = funded;
+	public void setClazz(String clazz) {
+		this.clazz = clazz;
 	}
 
 	public void setMachines(List<Machine> machines) {
@@ -187,6 +183,14 @@ public class Project {
 		if (StringUtils.isBlank(getProjectId())) {
 			throw new ProjectFault(this, "Invalid project.",
 					"Project name can't be blank.");
+		}
+
+		if (StringUtils.isNotBlank(clazz)) {
+
+			if (!Allocation.CLASSES.contains(clazz)) {
+				throw new ProjectFault(this, "Invalid Project.", clazz
+						+ " not a valid clazz");
+			}
 		}
 
 		if (!fullCheck) {

@@ -777,17 +777,25 @@ class GoldHelper {
 		command.add("-d")
 		command.add(desc)
 
-		if (goldProject.isFunded()) {
-			command.add("-X")
-			command.add("Funded=True")
-		} else {
-			command.add("-X")
-			command.add("Funded=False")
-		}
-
 		if ( StringUtils.isNotBlank(machinesString)) {
 			command.add("-X")
 			command.add("Machines="+machinesString)
+		}
+
+
+		String clazz = project.getClazz();
+		if ( StringUtils.isNotBlank(clazz) ) {
+			command.add("-X")
+			command.add("Class="+clazz)
+
+			if ( "Research".equals(clazz) ) {
+					command.add("-X")
+					command.add("Funded=True")
+				} else {
+					command.add("-X")
+					command.add("Funded=False")
+			}
+
 		}
 
 
