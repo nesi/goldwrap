@@ -32,6 +32,7 @@ public class Project {
 	private List<Machine> machines = Lists.newArrayList();
 
 	private String clazz = null;
+	private String projectData = null;
 
 	// private String site = "";
 
@@ -91,6 +92,10 @@ public class Project {
 		return principal;
 	}
 
+	public String getProjectData() {
+		return projectData;
+	}
+
 	/**
 	 * Other data, to be changed later on.
 	 */
@@ -129,6 +134,10 @@ public class Project {
 
 	}
 
+	public void setAccountIds(List<Integer> accountIds) {
+		this.accountIds = accountIds;
+	}
+
 	// /**
 	// * The site where the project will be run.
 	// *
@@ -137,10 +146,6 @@ public class Project {
 	// public String getSite() {
 	// return site;
 	// }
-
-	public void setAccountIds(List<Integer> accountIds) {
-		this.accountIds = accountIds;
-	}
 
 	public void setAllocations(List<Allocation> allocations) {
 		this.allocations = allocations;
@@ -156,6 +161,10 @@ public class Project {
 
 	public void setPrincipal(String principal) {
 		this.principal = principal;
+	}
+
+	public void setProjectData(String projectData) {
+		this.projectData = projectData;
 	}
 
 	public void setProjectHistory(String projectData) {
@@ -190,6 +199,13 @@ public class Project {
 			if (!Allocation.CLASSES.contains(clazz)) {
 				throw new ProjectFault(this, "Invalid Project.", clazz
 						+ " not a valid clazz");
+			}
+		}
+
+		if (StringUtils.isNotBlank(projectData)) {
+			if (projectData.contains("\"")) {
+				throw new ProjectFault(this, "Invalid Project.",
+						"projectData field value can't contain \".");
 			}
 		}
 

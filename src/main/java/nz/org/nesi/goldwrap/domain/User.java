@@ -28,6 +28,7 @@ public class User {
 	private String nationality = "New Zealand";
 	private String altEmail = "";
 	private String preferredClient = "";
+	private String affiliation = "";
 
 	public User() {
 
@@ -40,6 +41,10 @@ public class User {
 	 */
 	public String getAddress() {
 		return address;
+	}
+
+	public String getAffiliation() {
+		return affiliation;
 	}
 
 	/**
@@ -153,6 +158,10 @@ public class User {
 
 	public void setAddress(String address) {
 		this.address = address;
+	}
+
+	public void setAffiliation(String affiliation) {
+		this.affiliation = affiliation;
 	}
 
 	public void setAltEmail(String altEmail) {
