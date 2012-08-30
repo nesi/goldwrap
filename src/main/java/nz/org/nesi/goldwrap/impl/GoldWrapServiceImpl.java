@@ -64,24 +64,25 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		initialize();
 	}
 
-	public void addUsersToProject(String projectName, List<User> users) {
+	public synchronized void addUsersToProject(String projectName,
+			List<User> users) {
 
 		GoldHelper.addUsersToProject(projectName, users);
 
 	}
 
-	public Project addUserToProject(String projName, String userId) {
+	public synchronized Project addUserToProject(String projName, String userId) {
 		return GoldHelper.addUserToProject(projName, userId);
 	}
 
-	public void checkMachineName(String machineName) {
+	public synchronized void checkMachineName(String machineName) {
 		if (StringUtils.isBlank(machineName)) {
 			throw new ServiceException("Can't execute operation.",
 					"Machine name blank or not specified.");
 		}
 	}
 
-	public void createMachine(Machine mach) {
+	public synchronized void createMachine(Machine mach) {
 
 		String machName = mach.getName();
 		mach.validate(true);
@@ -124,7 +125,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public Project createProject(Project proj) {
+	public synchronized Project createProject(Project proj) {
 
 		String projName = proj.getProjectId();
 
@@ -281,13 +282,13 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public void createUser(User user) {
+	public synchronized void createUser(User user) {
 
 		GoldHelper.createUser(user);
 
 	}
 
-	public void delete(String resourceType) {
+	public synchronized void delete(String resourceType) {
 
 		if ("users".equals(resourceType.toLowerCase())) {
 
@@ -307,7 +308,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public void deleteAccount(Integer accNr) {
+	public synchronized void deleteAccount(Integer accNr) {
 
 		if (!GoldHelper.accountExists(accNr)) {
 			throw new AccountFault("Can't delete account " + accNr + ".",
@@ -324,7 +325,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 	}
 
-	public void deleteProject(String projName) {
+	public synchronized void deleteProject(String projName) {
 
 		GoldHelper.checkProjectname(projName);
 
@@ -343,7 +344,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 	}
 
-	public void deleteUser(String username) {
+	public synchronized void deleteUser(String username) {
 
 		if (StringUtils.isBlank(username)) {
 			throw new ServiceException("Can't delete user.",
@@ -365,7 +366,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public void deposit(String projName, Allocation alloc) {
+	public synchronized void deposit(String projName, Allocation alloc) {
 
 		if (alloc == null) {
 			throw new AllocationFault("Can't deposit allocation.",
@@ -426,18 +427,18 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		}
 	}
 
-	public Machine getMachine(String machineName) {
+	public synchronized Machine getMachine(String machineName) {
 		checkMachineName(machineName);
 
 		return GoldHelper.getMachine(machineName);
 
 	}
 
-	public List<Machine> getMachines() {
+	public synchronized List<Machine> getMachines() {
 		return GoldHelper.getAllMachines();
 	}
 
-	public Project getProject(String projName) {
+	public synchronized Project getProject(String projName) {
 
 		GoldHelper.checkProjectname(projName);
 
@@ -445,19 +446,20 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public List<Project> getProjects() {
+	public synchronized List<Project> getProjects() {
 		return GoldHelper.getAllProjects();
 	}
 
-	public List<Project> getProjectsForUser(String username) {
+	public synchronized List<Project> getProjectsForUser(String username) {
 		return GoldHelper.getProjectsForUser(username);
 	}
 
-	public List<Project> getProjectsWhereUserIsPrincipal(String username) {
+	public synchronized List<Project> getProjectsWhereUserIsPrincipal(
+			String username) {
 		return GoldHelper.getProjectsWhereUserIsPrincipal(username);
 	}
 
-	public User getUser(String username) {
+	public synchronized User getUser(String username) {
 
 		GoldHelper.checkUsername(username);
 
@@ -466,11 +468,11 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public List<User> getUsers() {
+	public synchronized List<User> getUsers() {
 		return GoldHelper.getAllUsers();
 	}
 
-	public List<User> getUsersForProject(String projName) {
+	public synchronized List<User> getUsersForProject(String projName) {
 		return GoldHelper.getUsersForProject(projName);
 	}
 
@@ -560,11 +562,11 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public boolean isRegistered(String user) {
+	public synchronized boolean isRegistered(String user) {
 		return GoldHelper.isRegistered(user);
 	}
 
-	public Machine modifyMachine(String machName, Machine machine) {
+	public synchronized Machine modifyMachine(String machName, Machine machine) {
 
 		checkMachineName(machName);
 
@@ -610,13 +612,13 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
-	public Project modifyProject(String projName, Project project) {
+	public synchronized Project modifyProject(String projName, Project project) {
 
 		return GoldHelper.modifyProject(projName, project);
 
 	}
 
-	public void modifyUser(String username, User user) {
+	public synchronized void modifyUser(String username, User user) {
 
 		GoldHelper.modifyUser(username, user);
 	}

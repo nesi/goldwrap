@@ -1,18 +1,16 @@
 package nz.org.nesi.goldwrap.domain
 
 
-import groovy.util.logging.Slf4j;
+import groovy.util.logging.Slf4j
 
-import java.util.List;
-
-import javax.xml.bind.annotation.XmlRootElement;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
+import javax.xml.bind.annotation.XmlRootElement
 
 import nz.org.nesi.goldwrap.Config
 import nz.org.nesi.goldwrap.errors.GoldCommandException
+
+import com.google.common.base.Joiner
+import com.google.common.base.Splitter
+import com.google.common.collect.Lists
 
 
 
@@ -111,7 +109,28 @@ class ExternalCommand {
 			proc = command().execute()
 		} else {
 			log.debug("Executing advanced command...")
+
 			def ac = advancedCommand()
+
+			if ( ac[0] == 'ssh' ) {
+				log.debug("Escaping special characters because of ssh...")
+				def temp = []
+				for ( String token : ac ) {
+					String tokenTemp = token.replace('"', '\\"')
+//					tokenTemp = tokenTemp.replace('{', '\\{')
+//					tokenTemp = tokenTemp.replace('}', '\\}')
+					if ( token != tokenTemp ) {
+						tokenTemp = '"'+tokenTemp+'"'
+					} else {
+						tokenTemp = tokenTemp.replace(' ', '\\ ')
+					}
+					log.debug("\t\tnew token: "+tokenTemp)
+					temp.add(tokenTemp)
+				}
+				ac = temp
+			}
+
+
 			log.debug('\n\n'+Joiner.on('\n').join(ac.iterator())+'\n\n')
 			ProcessBuilder procBuilder = new ProcessBuilder(ac)
 			proc = procBuilder.start()

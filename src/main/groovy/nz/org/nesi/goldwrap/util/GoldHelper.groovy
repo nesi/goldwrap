@@ -360,14 +360,13 @@ class GoldHelper {
 			if (project.getAccountIds().contains(id)) {
 
 				try {
-				List<String> accountMachinesString = generateMachinesString(acc.getMachines())
+					String accountMachinesString = generateMachinesString(acc.getMachines())
 
-				if ( accountMachinesString.equals(machinesString) ) {
-
-					return acc
-				}
+					if ( accountMachinesString.equals(machinesString) ) {
+						return acc
+					}
 				} catch (Exception e) {
-
+					e.printStackTrace()
 				}
 			}
 		}
