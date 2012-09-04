@@ -630,7 +630,12 @@ class GoldHelper {
 		}
 
 		def projects = getAllProjects().findAll() { proj ->
-			proj.getUsers().contains(username)
+			for ( User u : proj.getUsers() ) {
+				if (username.equals(u.getUserId())) {
+					return true
+				}
+			}
+			return false
 		} as List
 
 		return projects
