@@ -1,0 +1,8 @@
+<Context
+    docBase="/var/lib/goldwrap/goldwrap.war"
+    unpackWAR="true"
+    reloadable="true"
+    autoDeploy="true"
+    debug="0">
+  </Context>
+  

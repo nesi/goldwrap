@@ -1,8 +1,9 @@
 package nz.org.nesi.goldwrap.errors;
 
-import goldwrap.control.ExternalCommand;
 
 import javax.xml.ws.WebFault;
+
+import nz.org.nesi.goldwrap.domain.ExternalCommand;
 
 @WebFault
 public class GoldCommandException extends ServiceException {

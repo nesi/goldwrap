@@ -2,11 +2,22 @@
 <enunciate label="goldwrap" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://enunciate.codehaus.org/schemas/enunciate-1.25.xsd">
    <namespaces>
       <namespace id="api" uri="http://api.goldwrap.nesi.org.nz/" />
-      <namespace id="user" uri="http://goldwrap.nesi.org.nz/user" />
+      <namespace id="domain" uri="http://goldwrap.nesi.org.nz/domain" />
       <namespace id="errors" uri="http://goldwrap.nesi.org.nz/errors" />
    </namespaces>
+
+<!--    	<webapp mergeWebXML="mergeWeb.xml"> -->
+<!-- 	</webapp>    -->
    <modules>
+		<csharp disabled="true" />
       <!-- Docs -->
-      <docs splashPackage="nz.org.nesi.api" title="goldwrap" copyright="nesi.org.nz"/>
+      <docs splashPackage="nz.org.nesi.api" title="goldwrap" copyright="nesi.org.nz" groupRestResources="byPath"/>
+      			<download name="Example init file" file="examples/init.config"
+				description="Example init file to be placed in either /etc/goldwrap or $HOME/.goldwrap. The commands contained in it will be executed at startup." />
+			<download name="Example machine.json file" file="examples/machine.json"
+				description="Example file for a list of static resources to be created/modified on every goldwrap startup." />
+
+
+
    </modules>
 </enunciate>

@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>goldwrap</artifactId>
 	<packaging>war</packaging>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.1</version>
 	<name>maven project name</name>
 	<url>http://enunciate.codehaus.org</url>
 
@@ -41,6 +40,7 @@
 	<build>
 		<plugins>
 
+			<!-- enable jetty:run mojo -->
 			<plugin>
 				<groupId>org.mortbay.jetty</groupId>
 				<artifactId>jetty-maven-plugin</artifactId>
@@ -48,11 +48,10 @@
 					<scanIntervalSeconds>0</scanIntervalSeconds>
 				</configuration>
 			</plugin>
-
+			<!-- enable generation of jrebel.xml - needed for the agent -->
 			<plugin>
 				<groupId>org.zeroturnaround</groupId>
 				<artifactId>jrebel-maven-plugin</artifactId>
-				<version>1.1.1</version>
 				<executions>
 					<execution>
 						<id>generate-rebel-xml</id>
@@ -126,7 +125,7 @@
 			<plugin>
 				<groupId>org.codehaus.enunciate</groupId>
 				<artifactId>maven-enunciate-plugin</artifactId>
-				<version>1.25</version>
+				<version>${enunciate.version}</version>
 				<configuration>
 					<configFile>src/conf/enunciate.xml</configFile>
 				</configuration>
@@ -162,6 +161,20 @@
 					</configuration>
 				</configuration>
 			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.2.2</version>
+				<inherited>false</inherited>
+				<configuration>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<pushChanges>true</pushChanges>
+					<localCheckout>true</localCheckout>
+					<tagNameFormat>@{project.version}</tagNameFormat>
+					<releaseProfiles>deb</releaseProfiles>
+				</configuration>
+			</plugin>	
 		</plugins>
 		<pluginManagement>
 			<plugins>
@@ -182,13 +195,32 @@
 										<artifactId>
 											maven-enunciate-plugin
 										</artifactId>
-										<versionRange>[1.25,)</versionRange>
+										<versionRange>[${enunciate.version},)</versionRange>
 										<goals>
 											<goal>assemble</goal>
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore></ignore>
+										<ignore />
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.zeroturnaround
+										</groupId>
+										<artifactId>
+											jrebel-maven-plugin
+										</artifactId>
+										<versionRange>
+											[1.1.1,)
+										</versionRange>
+										<goals>
+											<goal>generate</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -203,7 +235,7 @@
 		<dependency>
 			<groupId>org.codehaus.enunciate</groupId>
 			<artifactId>enunciate-rt</artifactId>
-			<version>1.25</version>
+			<version>${enunciate.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
@@ -221,12 +253,225 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>12.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.1.1</version>
+			<scope>provided</scope>
+		</dependency>
 
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+			<version>1.6.4</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-configuration</groupId>
+			<artifactId>commons-configuration</artifactId>
+			<version>1.8</version>
+		</dependency>
+		<dependency>
+			<groupId>joda-time</groupId>
+			<artifactId>joda-time</artifactId>
+			<version>2.1</version>
+		</dependency>
 	</dependencies>
 
 	<parent>
 		<groupId>nz.org.nesi</groupId>
 		<artifactId>nesi</artifactId>
-		<version>0.11</version>
+		<version>0.19</version>
 	</parent>
+	
+	<profiles>
+	
+		<profile>
+			<id>deb</id>
+			<!-- <activation> -->
+			<!-- <property> -->
+			<!-- <name>BUILD_NUMBER</name> -->
+			<!-- </property> -->
+			<!-- </activation> -->
+
+			<build>
+			<finalName>goldwrap</finalName>
+			
+				<plugins>
+
+					<plugin>
+						<artifactId>maven-resources-plugin</artifactId>
+						<version>2.5</version>
+						<executions>
+							<execution>
+								<id>copy-deb-control</id>
+								<!-- here the phase you need -->
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/target/deb/control</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${basedir}/src/deb/control</directory>
+											<filtering>false</filtering>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.6</version>
+						<executions>
+							<execution>
+								<id>fix_permission</id>
+								<phase>prepare-package</phase>
+								<configuration>
+									<target>
+										<chmod file="target/deb/control/postinst" perm="755" />
+									</target>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>com.google.code.maven-replacer-plugin</groupId>
+						<artifactId>maven-replacer-plugin</artifactId>
+						<version>1.4.0</version>
+						<executions>
+							<execution>
+								<id>fix_deb_version</id>
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>replace</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<includes>
+								<include>target/deb/control/control</include>
+							</includes>
+							<ignoreMissingFile>false</ignoreMissingFile>
+
+							<replacements>
+								<replacement>
+									<token>VERSION_TOKEN</token>
+									<value>${project.version}</value>
+								</replacement>
+							</replacements>
+						</configuration>
+					</plugin>
+
+
+					<plugin>
+						<artifactId>jdeb</artifactId>
+						<groupId>org.vafer</groupId>
+						<version>0.9</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<id>build-deb</id>
+								<goals>
+									<goal>jdeb</goal>
+								</goals>
+								<configuration>
+									<changesIn>CHANGES.txt</changesIn>
+									<deb>[[buildDir]]/goldwrap-${project.version}.deb</deb>
+									<controlDir>target/deb/control</controlDir>
+									<!-- <installDir>/opt/grisu</installDir> -->
+									<dataSet>
+										<data>
+											<src>${project.build.directory}/${project.build.finalName}.war</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/var/lib/goldwrap/</prefix>
+												<user>gold</user>
+												<group>gold</group>
+											</mapper>
+										</data>
+
+										<data>
+											<src>${project.basedir}/src/deb/data/goldwrap.xml</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/etc/tomcat6/Catalina/localhost/</prefix>
+												<user>gold</user>
+												<group>gold</group>
+											</mapper>
+										</data>
+										<data>
+											<src>${project.basedir}/src/deb/data/goldwrap.config</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/usr/share/doc/goldwrap/examples</prefix>
+												<user>root</user>
+												<group>root</group>
+											</mapper>
+										</data>
+										<data>
+											<src>${project.basedir}/src/main/resources/logback.xml</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/usr/share/doc/goldwrap/examples</prefix>
+												<user>root</user>
+												<group>root</group>
+											</mapper>
+										</data>
+										<data>
+											<src>${project.basedir}/src/deb/data/goldwrap-ajp.conf</src>
+											<type>file</type>
+											<mapper>
+												<type>perm</type>
+												<prefix>/usr/share/doc/goldwrap/examples</prefix>
+												<user>root</user>
+												<group>root</group>
+											</mapper>
+										</data>
+
+									</dataSet>
+
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+
+		</profile>	
+		</profiles>
+	
+	<properties>
+		<enunciate.version>1.25</enunciate.version>
+	</properties>
+	<scm>
+		<connection>scm:git:git://github.com/nesi/goldwrap.git</connection>
+		<developerConnection>scm:git:git@github.com:nesi/goldwrap.git</developerConnection>
+		<url>https://github.com/nesi/goldwrap</url>
+	</scm>
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>https://code.ceres.auckland.ac.nz/jenkins/job/Goldwrap-SNAPSHOT/</url>
+	</ciManagement>
 </project>

@@ -1,0 +1,16 @@
+<!-- <?xml version="1.0" encoding="UTF-8"?> -->
+<!-- <web-app> -->
+
+<!-- 	<servlet> -->
+<!-- 		<servlet-name>jaxws-GoldWrapService</servlet-name> -->
+<!-- 		<servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet -->
+<!-- 		</servlet-class> -->
+
+<!-- 		<init-param> -->
+<!-- 			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name> -->
+<!-- 			<param-value>true</param-value> -->
+<!-- 		</init-param> -->
+<!-- 	</servlet> -->
+
+
+<!-- </web-app> -->
