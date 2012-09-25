@@ -33,6 +33,10 @@ public class ProjectFault extends ServiceException {
 		super(message, faultInfo, cause);
 	}
 
+	public ProjectFault(String message, String reason) {
+		this(message, reason, ERROR_CODE);
+	}
+
 	public ProjectFault(String message, String reason, Integer errorCode) {
 		super(message, new FaultInfo());
 		getFaultInfo().setErrorCode(errorCode);

@@ -452,7 +452,7 @@
 	
 	<properties>
 		<enunciate.version>1.25</enunciate.version>
-		<groovy.version>2.0.2</groovy.version>
+		<groovy.version>2.0.4</groovy.version>
 	</properties>
 	<scm>
 		<connection>scm:git:git://github.com/nesi/goldwrap.git</connection>

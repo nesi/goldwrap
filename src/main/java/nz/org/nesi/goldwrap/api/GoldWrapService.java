@@ -1,12 +1,17 @@
 package nz.org.nesi.goldwrap.api;
 
+import java.util.List;
+
 import javax.jws.WebService;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
+import nz.org.nesi.goldwrap.domain.Project;
 import nz.org.nesi.goldwrap.domain.User;
 import nz.org.nesi.goldwrap.errors.GoldCommandFault;
 
@@ -54,6 +59,86 @@ public interface GoldWrapService {
 	@DELETE
 	@Path("/users/{username}")
 	public void deleteUser(@PathParam("username") String userId);
+
+	/**
+	 * Retrives the user with the specified username.
+	 * 
+	 * @param username
+	 *            the username
+	 * @return the user object
+	 */
+	@GET
+	@Path("/users/{username}")
+	public User getUser(@PathParam("username") String username);
+
+	/**
+	 * Gets a list of all users that are currently registered in Gold.
+	 * 
+	 * @return the list of all users
+	 */
+	@GET
+	@Path("/users")
+	public List<User> getAllUsers();
+
+	/**
+	 * Gets a list of all projects in Gold.
+	 * 
+	 * @return the projects
+	 */
+	@GET
+	@Path("/projects")
+	public List<Project> getAllProjects();
+
+	/**
+	 * Gets the project with the specified id from Gold.
+	 * 
+	 * @param projectId
+	 *            the projectId
+	 * @return the project
+	 */
+	@GET
+	@Path("/projects/{projectId}")
+	public Project getProject(@PathParam("projectId") String projectId);
+
+	/**
+	 * Creates a project in Gold.
+	 * 
+	 * @param p
+	 *            the project
+	 */
+	@PUT
+	@Path("/projects")
+	public void createProject(Project p);
+
+	@DELETE
+	@Path("/projects/{projectId}")
+	public void deleteProject(@PathParam("projectId") String id);
+
+	/**
+	 * Changes the details of the project.
+	 * 
+	 * This doesn't add or remove users.
+	 * 
+	 * @param proj
+	 *            the project
+	 */
+	@POST
+	@Path("/projects")
+	public void modifyProject(Project proj);
+
+	/**
+	 * Adds a user to a project.
+	 * 
+	 * @param projectId
+	 *            the project name
+	 * @param username
+	 *            the username
+	 */
+	@POST
+	@Path("/projects/{projectId}/add_user")
+	@Consumes("text/plain")
+	public void addUserToProject(@PathParam("projectId") String projectId,
+			String username);
 
 	// /**
 	// * Creates a {@link Project} in the Gold database.
