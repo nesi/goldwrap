@@ -3,8 +3,12 @@ package nz.org.nesi.goldwrap.util
 import groovy.util.logging.Slf4j
 import nz.org.nesi.goldwrap.Config
 import nz.org.nesi.goldwrap.domain.ExternalCommand
+import nz.org.nesi.goldwrap.domain.Machine
+import nz.org.nesi.goldwrap.domain.Organization
 import nz.org.nesi.goldwrap.domain.Project
 import nz.org.nesi.goldwrap.domain.User
+import nz.org.nesi.goldwrap.errors.MachineFault
+import nz.org.nesi.goldwrap.errors.OrganizationFault
 import nz.org.nesi.goldwrap.errors.ProjectFault
 import nz.org.nesi.goldwrap.errors.UserFault
 
@@ -38,6 +42,83 @@ class GoldWrap {
 	static final String FULLNAME_KEY = "CommonName"
 
 
+	public static void addUserToProject(String projectId, String username) {
+
+		if ( ! isRegistered(username) ) {
+			throw new UserFault("Can't retrieve user.", "User " + username
+			+ " not in Gold database.", 404)
+		}
+
+		if ( ! projectExists(projectId) ) {
+			throw new ProjectFault("Can't find project.", "Project "+projectId+" not in Gold database.", 404)
+		}
+
+		log.debug("Adding user "+username+" to project "+projectId)
+		ExternalCommand ec = executeGoldCommand('gchproject --addUser '+username+ " "+projectId)
+
+		Project p = getProject(projectId)
+
+		if (! p.getUsers().contains(username)) {
+			throw new ProjectFault("Could not add user "+username+" to project "+projectId+".", "Unknown reason", 500)
+		}
+	}
+
+	public static void createMachine(String name, String arch, String os, String desc) {
+
+		if (StringUtils.isBlank(name)) {
+			throw new MachineFault("Can't create machine.", "No machine name specified.", 400);
+		}
+
+		List<String> command = Lists.newArrayList("gmkmachine")
+		if (StringUtils.isNotBlank(arch)) {
+			command.add('--arch')
+			command.add(arch)
+		}
+		if (StringUtils.isNotBlank(os)) {
+			command.add('--opsys')
+			command.add(os)
+		}
+		if (StringUtils.isNotBlank(desc)) {
+			command.add('-d')
+			command.add(desc)
+		}
+
+		command.add(name)
+
+		ExternalCommand ec = executeGoldCommand(command)
+
+		if (!GoldWrap.machineExists(name)) {
+			throw new MachineFault("Can't create machine "+name+".", "Unknown reason", 500)
+		}
+	}
+
+	public static void createOrganization(String name, String desc) {
+
+		if ( StringUtils.isBlank(name) ) {
+			throw new OrganizationFault("Can't create organization.", "Organization name not specified", 400)
+		}
+
+		if ( organizationExists(name) ) {
+			throw new OrganizationFault("Can't create organization.", "Organization with id "+name+" already exists.")
+		}
+
+		List<String> command = Lists.newArrayList("goldsh")
+		command.add("Organization")
+		command.add("Create")
+
+		command.add("Name="+name)
+
+		if (StringUtils.isNotBlank(desc)) {
+			command.add("Description="+desc)
+		}
+
+		ExternalCommand ec = executeGoldCommand(command)
+
+		if (!GoldWrap.organizationExists(name)) {
+			throw new OrganizationFault("Can't create organization "+name+".", "Unknown reason", 500)
+		}
+	}
+
 	public static void createProject(String projectId, String description) {
 
 		if ( StringUtils.isBlank(projectId) ) {
@@ -65,7 +146,7 @@ class GoldWrap {
 		}
 	}
 
-	public static void createUser(String username, String fullName, String email, String phone) {
+	public static void createUser(String username, String fullName, String institution, String email, String phone) {
 
 		if ( StringUtils.isBlank(username) ) {
 			throw new UserFault("Can't create user.", "Username not specified", 400)
@@ -76,13 +157,21 @@ class GoldWrap {
 		}
 
 		if ( StringUtils.isBlank(email) ) {
-			throw new UserFault("Can't create user.", "Email address specified", 400)
+			throw new UserFault("Can't create user.", "Email address not specified", 400)
+		}
+
+		if ( StringUtils.isBlank(institution) ) {
+			throw new UserFault("Can't create user.", "Organization not specified", 400)
 		}
 
 
 		if (isRegistered(username)) {
 			throw new UserFault("Can't create user.", "User " + username
 			+ " already in Gold database.", 409)
+		}
+
+		if (!organizationExists(institution)) {
+			createOrganization(institution, "");
 		}
 
 
@@ -99,6 +188,9 @@ class GoldWrap {
 			command.add("-F")
 			command.add(phone)
 		}
+
+		command.add("--extension")
+		command.add("Organization="+institution)
 
 		command.add(username)
 
@@ -124,30 +216,6 @@ class GoldWrap {
 		if ( isRegistered(username) ) {
 			throw new UserFault("Could not delete user "+username+".", "Unknown reason")
 		}
-
-	}
-
-	public static void addUserToProject(String projectId, String username) {
-
-		if ( ! isRegistered(username) ) {
-			throw new UserFault("Can't retrieve user.", "User " + username
-			+ " not in Gold database.", 404)
-		}
-
-		if ( ! projectExists(projectId) ) {
-			throw new ProjectFault("Can't find project.", "Project "+projectId+" not in Gold database.", 404)
-		}
-
-		log.debug("Adding user "+username+" to project "+projectId)
-		ExternalCommand ec = executeGoldCommand('gchproject --addUser '+username+ " "+projectId)
-
-		Project p = getProject(projectId)
-
-		if (! p.getUsers().contains(username)) {
-			throw new ProjectFault("Could not add user "+username+" to project "+projectId+".", "Unknown reason", 500)
-		}
-
-
 	}
 
 	private static void execute(ExternalCommand ec) {
@@ -200,303 +268,458 @@ class GoldWrap {
 				temp.add(tokenTemp)
 			}
 			commandToExecute = temp
-		}
+			//		}
 
 
-		log.debug('\n\n'+Joiner.on('\n').join(commandToExecute.iterator())+'\n\n')
-		ProcessBuilder procBuilder = new ProcessBuilder(commandToExecute)
-		proc = procBuilder.start()
+			log.debug('\n\n'+Joiner.on('\n').join(commandToExecute.iterator())+'\n\n')
+			ProcessBuilder procBuilder = new ProcessBuilder(commandToExecute)
+			proc = procBuilder.start()
 
-		proc.waitFor()
-		ec.setFinished(new Date())
+			proc.waitFor()
+			ec.setFinished(new Date())
 
-		ec.setExitCode(proc.exitValue())
-		def stdout = []
-		proc.in.text.split('\n').each { it ->
-			def temp = it.trim()
-			if ( temp ) {
-				stdout.add(it.trim())
+			ec.setExitCode(proc.exitValue())
+			def stdout = []
+			proc.in.text.split('\n').each { it ->
+				def temp = it.trim()
+				if ( temp ) {
+					stdout.add(it.trim())
+				}
 			}
-		}
-		def stderr = []
-		proc.err.text.split('\n').each { it ->
-			def temp = it.trim()
-			if ( temp ) {
-				stderr.add(temp)
+			def stderr = []
+			proc.err.text.split('\n').each { it ->
+				def temp = it.trim()
+				if ( temp ) {
+					stderr.add(temp)
+				}
+				ec.setStdOut(stdout)
+				ec.setStdErr(stderr)
 			}
-			ec.setStdOut(stdout)
-			ec.setStdErr(stderr)
+
+			if ( Config.debugEnabled() ) {
+				log.debug("STDOUT:\n\n"+Joiner.on('\n').join(stdout.iterator()))
+				log.debug("\nSTDERR:\n\n"+Joiner.on('\n').join(stderr.iterator()))
+			}
+
+			log.debug("Executed advanced command: "+ec.toString())
+
 		}
 
-		if ( Config.debugEnabled() ) {
-			log.debug("STDOUT:\n\n"+Joiner.on('\n').join(stdout.iterator()))
-			log.debug("\nSTDERR:\n\n"+Joiner.on('\n').join(stderr.iterator()))
+		private static ExternalCommand executeGoldCommand(List<String> command) {
+			ExternalCommand gc = new ExternalCommand(command)
+			execute(gc)
+			gc.verify()
+			return gc
 		}
 
-		log.debug("Executed advanced command: "+ec.toString())
-
-	}
-
-	private static ExternalCommand executeGoldCommand(List<String> command) {
-		ExternalCommand gc = new ExternalCommand(command)
-		execute(gc)
-		gc.verify()
-		return gc
-	}
-
-	private static ExternalCommand executeGoldCommand(String command) {
-		def list = command.tokenize()
-		return executeGoldCommand(list)
-	}
-
-	public static List<Project> getAllProjects() {
-
-		ExternalCommand ec = executeGoldCommand("glsproject --raw")
-
-		def map = parseGLSOutput(ec.getStdOut())
-
-		def projects = []
-
-		map.each { name, properties ->
-			Project p = getProject(properties)
-			projects.add(p)
+		private static ExternalCommand executeGoldCommand(String command) {
+			def list = command.tokenize()
+			return executeGoldCommand(list)
 		}
 
-		return projects
+		public static List<Machine> getAllMachines() {
+
+			ExternalCommand ec = executeGoldCommand("glsmachine --raw")
+
+			def map = parseGLSOutput(ec.getStdOut())
+
+			def machines = []
+
+			map.each { name, properties ->
+				Machine m = getMachine(properties)
+				machines.add(m)
+			}
+
+			return machines
 
 
-	}
-
-	public static List<User> getAllUsers() {
-		ExternalCommand ec = executeGoldCommand("glsuser --raw")
-
-		def map = parseGLSOutput(ec.getStdOut())
-
-		def users = []
-
-		map.each { name, properties ->
-			User u = getUser(properties)
-			users.add(u)
 		}
 
-		return users
-	}
+		public static List<Organization> getAllOrganizations() {
 
-	public static Project getProject(Map properties) {
+			ExternalCommand ec = executeGoldCommand("goldsh Organization Query --raw")
 
-		def name = properties.get(NAME_KEY)
+			def map = parseGLSOutput(ec.getStdOut())
 
-		if ( ! name ) {
-			throw new ProjectFault("Can't create Project.", "No projectId.", 500)
+			def orgs = []
+
+			map.each { name, properties ->
+				Organization o = getOrganization(properties)
+				orgs.add(o)
+			}
+
+			return orgs
+
 		}
 
-		def desc = properties.get(DESCRIPTION_KEY)
-		def users = properties.get(USERS_KEY)
+		public static List<Project> getAllProjects() {
 
-		Project p = new Project()
-		p.setProjectId(name)
-		if ( desc ) {
-			p.setDescription(desc)
+			ExternalCommand ec = executeGoldCommand("glsproject --raw")
+
+			def map = parseGLSOutput(ec.getStdOut())
+
+			def projects = []
+
+			map.each { name, properties ->
+				Project p = getProject(properties)
+				projects.add(p)
+			}
+
+			return projects
+
+
 		}
 
-		if ( users ) {
-			p.setUsers(users.tokenize(','))
+		public static List<User> getAllUsers() {
+			ExternalCommand ec = executeGoldCommand("glsuser --show Name,CommonName,PhoneNumber,EmailAddress,Organization,Description --raw")
+
+			def map = parseGLSOutput(ec.getStdOut())
+
+			def users = []
+
+			map.each { name, properties ->
+				User u = getUser(properties)
+				users.add(u)
+			}
+
+			return users
 		}
 
-		return p
+		public static Machine getMachine(Map properties) {
 
-	}
+			def name = properties.get(NAME_KEY)
 
-	public static Project getProject(String projectId) {
-		ExternalCommand ec = executeGoldCommand("glsproject --raw " + projectId)
+			if ( ! name ) {
+				throw new MachineFault("Can't get Machine.", "No machine name.", 500)
+			}
 
-		def map = parseGLSOutput(ec.getStdOut())
+			def desc = properties.get(DESCRIPTION_KEY)
+			def os = properties.get(OPERATING_SYSTEM_KEY)
+			def arch = properties.get(ARCHITECTURE_KEY)
 
-		if (! map[projectId] ) {
-			throw new ProjectFault("Can't get project.", "Project "+projectId+" not in gold database", 404)
+			Machine m = new Machine()
+			m.setName(name)
+			if ( desc ) {
+				m.setDescription(desc)
+			}
+			if (os) {
+				m.setOpsys(os);
+			}
+			if (arch) {
+				m.setArch(arch)
+			}
+
+			return m
+
 		}
 
-		return getProject(map[projectId])
-	}
+		public static Machine getMachine(String name) {
+			ExternalCommand ec = executeGoldCommand("glsmachine --raw " + name)
 
-	public static User getUser(Map properties) {
+			def map = parseGLSOutput(ec.getStdOut())
 
-		def name = properties.get(NAME_KEY)
+			if (! map[name] ) {
+				throw new MachineFault("Can't get machine.", "Machine "+name+" not in gold database", 404)
+			}
 
-		if ( ! name ) {
-			throw new UserFault("Can't create user.", "No username.", 500)
+			return getMachine(map[name])
 		}
 
-		def phone = properties.get(PHONE_KEY)
-		def email = properties.get(EMAIL_KEY)
-		def fullName = properties.get(FULLNAME_KEY)
+		public static Organization getOrganization(Map properties) {
 
-		User u = new User()
-		if ( name ) {
-			u.setUserId(name)
-		}
-		if (phone) {
-			u.setPhone(phone)
-		}
-		if (email) {
-			u.setEmail(email)
-		}
-		if (fullName) {
-			u.setFullName(fullName)
-		}
+			def name = properties.get(NAME_KEY)
 
-		return u
-	}
+			if ( ! name ) {
+				throw new OrganizationFault("Can't get Organization.", "No organization name.", 500)
+			}
 
-	public static User getUser(String username) {
+			def desc = properties.get(DESCRIPTION_KEY)
 
-		ExternalCommand ec = executeGoldCommand("glsuser --raw " + username)
+			Organization o = new Organization()
+			o.setName(name)
 
-		def map = parseGLSOutput(ec.getStdOut())
+			if ( desc ) {
+				o.setDescription(desc)
+			}
 
-		if (! map[username] ) {
-			throw new UserFault("Can't get user.", "User "+username+" not in gold database", 404)
+			return o
 		}
 
-		return getUser(map[username])
+		public static Organization getOrganization(String name) {
 
-	}
+			ExternalCommand ec = executeGoldCommand("goldsh Organization Query Name==" + name + " --raw")
 
-	static boolean isRegistered(String username) {
+			def map = parseGLSOutput(ec.getStdOut())
 
-		ExternalCommand gc = executeGoldCommand("glsuser -show Name -quiet")
+			if (! map[name] ) {
+				throw new OrganizationFault("Can't get organization.", "Organization "+name+" not in gold database", 404)
+			}
 
-		if (gc.getStdOut().contains(username)) {
-			return true
-		} else {
-			return false
-		}
-	}
+			return getOrganization(map[name])
 
-	static void main(def args){
-
-		Project p = getProject("testproject5")
-
-		println p.getUsers()
-	}
-
-
-
-
-
-
-
-
-
-
-
-	public static void modifyUser(String username, String fullName, String email, String phone) {
-
-		if (StringUtils.isBlank(username)) {
-			throw new UserFault("Can't modify user.",
-			"Username not specified.")
 		}
 
-		if (!isRegistered(username)) {
-			throw new UserFault("Can't modify user.", "User " + username
-			+ " not in Gold database.", 404)
+		public static Project getProject(Map properties) {
+
+			def name = properties.get(NAME_KEY)
+
+			if ( ! name ) {
+				throw new ProjectFault("Can't get Project.", "No projectId.", 500)
+			}
+
+			def desc = properties.get(DESCRIPTION_KEY)
+			def users = properties.get(USERS_KEY)
+
+			Project p = new Project()
+			p.setProjectId(name)
+			if ( desc ) {
+				p.setDescription(desc)
+			}
+
+			if ( users ) {
+				p.setUsers(users.tokenize(','))
+			}
+
+			return p
+
 		}
 
+		public static Project getProject(String projectId) {
+			ExternalCommand ec = executeGoldCommand("glsproject --raw " + projectId)
 
-		List<String> command = Lists.newArrayList("gchuser")
-		if (StringUtils.isNotBlank(fullName)) {
-			command.add("-n")
-			command.add("fullname")
-		}
-		if (StringUtils.isNotBlank(email)) {
-			command.add("-E")
-			command.add(email)
-		}
-		if (StringUtils.isNotBlank(phone)) {
-			command.add("-F")
-			command.add(phone)
+			def map = parseGLSOutput(ec.getStdOut())
+
+			if (! map[projectId] ) {
+				throw new ProjectFault("Can't get project.", "Project "+projectId+" not in gold database", 404)
+			}
+
+			return getProject(map[projectId])
 		}
 
-		command.add(username)
+		public static User getUser(Map properties) {
 
-		ExternalCommand ec = executeGoldCommand(command)
+			def name = properties.get(NAME_KEY)
 
+			if ( ! name ) {
+				throw new UserFault("Can't create user.", "No username.", 500)
+			}
 
-	}
+			def phone = properties.get(PHONE_KEY)
+			def email = properties.get(EMAIL_KEY)
+			def fullName = properties.get(FULLNAME_KEY)
+			def org = properties.get(ORGANIZATION_KEY)
 
-	public static void modifyProject(String projectId, String description) {
+			User u = new User()
 
-		if (StringUtils.isBlank(projectId)) {
-			throw new ProjectFault("Can't modify project.",
-			"projectId not specified.", 500)
-		}
-
-		if (!projectExists(projectId)) {
-			throw new ProjectFault("Can't modify project.", "project " + projectId
-			+ " not in Gold database.", 404)
-		}
-
-
-		List<String> command = Lists.newArrayList("gchproject")
-		if (StringUtils.isNotBlank(description)) {
-			command.add("-d")
-			command.add(description)
-		}
-
-		command.add(projectId)
-
-		ExternalCommand ec = executeGoldCommand(command)
-
-
-	}
-
-	static def parseGLSOutput(def output) {
-		return parseGLSOutput(output, NAME_KEY)
-	}
-
-
-	static def parseGLSOutput(def output, String KEY) {
-
-		output = output.findAll {
-			( ! it.trim().startsWith("-") ) && ! (it.trim().startsWith("root") )
-		}
-		def keyList = null
-		try {
-			keyList = Lists.newArrayList(
-					Splitter.on('|').trimResults().split(output.get(0)))
-			output.remove(0)
-		} catch (IndexOutOfBoundsException ioobe) {
-			log.debug('No data')
-			return [:]
-		}
-
-		def result = [:]
-
-		for ( def line : output ) {
-			List tokens = Lists.newArrayList(
-					Splitter.on('|').trimResults().split(line))
-
-			def map = [keyList, tokens].transpose().collectEntries{ it }
-			def name = map.get(KEY)
 			if ( name ) {
-				result[map.get(KEY)] = map
+				u.setUserId(name)
+			}
+			if (phone) {
+				u.setPhone(phone)
+			}
+			if (email) {
+				u.setEmail(email)
+			}
+			if (fullName) {
+				u.setFullName(fullName)
+			}
+			if (org) {
+				u.setOrganization(org)
+			}
+
+			return u
+		}
+
+		public static User getUser(String username) {
+
+			ExternalCommand ec = executeGoldCommand("glsuser --show Name,CommonName,PhoneNumber,EmailAddress,Organization,Description --raw " + username)
+
+			def map = parseGLSOutput(ec.getStdOut())
+
+			if (! map[username] ) {
+				throw new UserFault("Can't get user.", "User "+username+" not in gold database", 404)
+			}
+
+			return getUser(map[username])
+
+		}
+
+		static boolean isRegistered(String username) {
+
+			ExternalCommand gc = executeGoldCommand("glsuser -show Name -quiet")
+
+			if (gc.getStdOut().contains(username)) {
+				return true
+			} else {
+				return false
 			}
 		}
-		result
-	}
 
 
-	public static boolean projectExists(String id) {
+		public static boolean machineExists(String id) {
 
-		for (Project p : getAllProjects() ) {
-			if ( id == p.getProjectId() ) {
-				return true;
+			for (Machine m : getAllMachines() ) {
+				if ( id == m.getName() ) {
+					return true;
+				}
 			}
+
+			return false;
+
 		}
 
-		return false;
+
+		static void main(def args){
+
+			Project p = getProject("testproject5")
+
+			println p.getUsers()
+		}
+
+		public static void modifyMachine(String name, String arch, String os, String desc) {
+
+			if (!name) {
+				throw new MachineFault("Can't modify machine.", "No machine name specified.", 400);
+			}
+
+			if ( ! machineExists(name) ) {
+				throw new MachineFault("Can't modify machine.", "Machine "+name+" does not exist in Gold", 404);
+			}
+
+			List<String> command = Lists.newArrayList("gchmachine")
+			if (StringUtils.isNotBlank(arch)) {
+				command.add('--arch')
+				command.add(arch)
+			}
+			if (StringUtils.isNotBlank(os)) {
+				command.add('--opsys')
+				command.add(os)
+			}
+			if (StringUtils.isNotBlank(desc)) {
+				command.add('-d')
+				command.add(desc)
+			}
+
+			command.add(name)
+
+			ExternalCommand ec = executeGoldCommand(command)
+
+		}
+
+		public static void modifyProject(String projectId, String description) {
+
+			if (StringUtils.isBlank(projectId)) {
+				throw new ProjectFault("Can't modify project.",
+				"projectId not specified.", 500)
+			}
+
+			if (!projectExists(projectId)) {
+				throw new ProjectFault("Can't modify project.", "project " + projectId
+				+ " not in Gold database.", 404)
+			}
+
+
+			List<String> command = Lists.newArrayList("gchproject")
+			if (StringUtils.isNotBlank(description)) {
+				command.add("-d")
+				command.add(description)
+			}
+
+			command.add(projectId)
+
+			ExternalCommand ec = executeGoldCommand(command)
+
+
+		}
+
+		public static void modifyUser(String username, String fullName, String email, String phone) {
+
+			if (StringUtils.isBlank(username)) {
+				throw new UserFault("Can't modify user.",
+				"Username not specified.")
+			}
+
+			if (!isRegistered(username)) {
+				throw new UserFault("Can't modify user.", "User " + username
+				+ " not in Gold database.", 404)
+			}
+
+
+			List<String> command = Lists.newArrayList("gchuser")
+			if (StringUtils.isNotBlank(fullName)) {
+				command.add("-n")
+				command.add("fullname")
+			}
+			if (StringUtils.isNotBlank(email)) {
+				command.add("-E")
+				command.add(email)
+			}
+			if (StringUtils.isNotBlank(phone)) {
+				command.add("-F")
+				command.add(phone)
+			}
+
+			command.add(username)
+
+			ExternalCommand ec = executeGoldCommand(command)
+
+
+		}
+
+		public static boolean organizationExists(String name) {
+			for (Organization o : getAllOrganizations()) {
+				if ( name == o.getName()) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		static def parseGLSOutput(def output) {
+			return parseGLSOutput(output, NAME_KEY)
+		}
+
+		static def parseGLSOutput(def output, String KEY) {
+
+			output = output.findAll {
+				( ! it.trim().startsWith("-") ) && ! (it.trim().startsWith("root") )
+			}
+			def keyList = null
+			try {
+				keyList = Lists.newArrayList(
+				Splitter.on('|').trimResults().split(output.get(0)))
+				output.remove(0)
+			} catch (IndexOutOfBoundsException ioobe) {
+				log.debug('No data')
+				return [:]
+			}
+
+			def result = [:]
+
+			for ( def line : output ) {
+				List tokens = Lists.newArrayList(
+				Splitter.on('|').trimResults().split(line))
+
+				def map = [keyList, tokens].transpose().collectEntries{ it }
+				def name = map.get(KEY)
+				if ( name ) {
+					result[map.get(KEY)] = map
+				}
+			}
+			result
+		}
+
+		public static boolean projectExists(String id) {
+
+			for (Project p : getAllProjects() ) {
+				if ( id == p.getProjectId() ) {
+					return true;
+				}
+			}
+
+			return false;
+
+		}
+
 
 	}
-
-
-}

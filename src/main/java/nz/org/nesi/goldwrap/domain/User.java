@@ -16,6 +16,7 @@ public class User {
 	// private String institution = "";
 	private String phone = "";
 	private String email = "";
+	private String organization;
 
 	public User() {
 
@@ -86,4 +87,11 @@ public class User {
 		this.userId = userId;
 	}
 
+	public String getOrganization() {
+		return organization;
+	}
+
+	public void setOrganization(String org) {
+		this.organization = org;
+	}
 }

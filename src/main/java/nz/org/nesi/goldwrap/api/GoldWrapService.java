@@ -11,6 +11,8 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
+import nz.org.nesi.goldwrap.domain.Machine;
+import nz.org.nesi.goldwrap.domain.Organization;
 import nz.org.nesi.goldwrap.domain.Project;
 import nz.org.nesi.goldwrap.domain.User;
 import nz.org.nesi.goldwrap.errors.GoldCommandFault;
@@ -139,6 +141,76 @@ public interface GoldWrapService {
 	@Consumes("text/plain")
 	public void addUserToProject(@PathParam("projectId") String projectId,
 			String username);
+
+	/**
+	 * Creates a machine in Gold.
+	 * 
+	 * @param machine
+	 *            the machine
+	 */
+	@PUT
+	@Path("/machines")
+	public void createMachine(Machine machine);
+
+	/**
+	 * Returns a list of all machines.
+	 * 
+	 * @return the machines
+	 */
+	@GET
+	@Path("/machines")
+	public List<Machine> getAllMachines();
+
+	/**
+	 * Returns the machine with the specified name.
+	 * 
+	 * @param machine_name
+	 *            the machine name
+	 * @return the machine
+	 */
+	@GET
+	@Path("/machines/{machine_name}")
+	public Machine getMachine(@PathParam("machine_name") String machine_name);
+
+	/**
+	 * Modifies a machine.
+	 * 
+	 * @param machine
+	 *            the machine
+	 */
+	@POST
+	@Path("/machines")
+	public void modifyMachine(Machine machine);
+
+	/**
+	 * Creates a new organization in Gold.
+	 * 
+	 * @param org
+	 *            the organization
+	 */
+	@PUT
+	@Path("/organizations")
+	public void createOrganization(Organization org);
+
+	/**
+	 * Returns a list of all organizations in the Gold database.
+	 * 
+	 * @return the organizations
+	 */
+	@GET
+	@Path("/organizations")
+	public List<Organization> getAllOrgainzations();
+
+	/**
+	 * Retrieve the organization with the specified name.
+	 * 
+	 * @param orgname
+	 *            the name of the organization
+	 * @return the organization
+	 */
+	@GET
+	@Path("/organizations/{orgname}")
+	public Organization getOrganization(@PathParam("orgname") String orgname);
 
 	// /**
 	// * Creates a {@link Project} in the Gold database.
