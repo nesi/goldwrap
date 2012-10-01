@@ -61,8 +61,6 @@ class GoldWrap {
 		if (! p.getUsers().contains(username)) {
 			throw new ProjectFault("Could not add user "+username+" to project "+projectId+".", "Unknown reason", 500)
 		}
-
-
 	}
 
 	public static void createMachine(String name, String arch, String os, String desc) {
@@ -108,10 +106,10 @@ class GoldWrap {
 		command.add("Organization")
 		command.add("Create")
 
-		command.add("Name="+name)
+		command.add("Name=\\\""+name+"\\\"")
 
 		if (StringUtils.isNotBlank(desc)) {
-			command.add("Description="+desc)
+			command.add("Description=\\\""+desc+"\\\"")
 		}
 
 		ExternalCommand ec = executeGoldCommand(command)
@@ -119,7 +117,6 @@ class GoldWrap {
 		if (!GoldWrap.organizationExists(name)) {
 			throw new OrganizationFault("Can't create organization "+name+".", "Unknown reason", 500)
 		}
-
 	}
 
 	public static void createProject(String projectId, String description) {
@@ -219,7 +216,6 @@ class GoldWrap {
 		if ( isRegistered(username) ) {
 			throw new UserFault("Could not delete user "+username+".", "Unknown reason")
 		}
-
 	}
 
 	private static void execute(ExternalCommand ec) {
@@ -252,27 +248,27 @@ class GoldWrap {
 		} else {
 			commandToExecute = ec.getCommand()
 		}
-//		if ( commandToExecute[0] == 'ssh' ) {
-//			log.debug("Escaping special characters because of ssh...")
-//			def temp = []
-//			for ( String token : commandToExecute ) {
-//				if ( ! token ) {
-//					continue
-//				}
-//				String tokenTemp = token.replace('"', '\\"')
-//				//					tokenTemp = tokenTemp.replace('{', '\\{')
-//				//					tokenTemp = tokenTemp.replace('}', '\\}')
-//				if ( token != tokenTemp ) {
-//					tokenTemp = '"'+tokenTemp+'"'
-//				} else {
-//					tokenTemp = tokenTemp.replace(' ', '\\ ')
-//				}
-//				log.debug("\t\tnew token: "+tokenTemp)
+//				if ( commandToExecute[0] == 'ssh' ) {
+//					log.debug("Escaping special characters because of ssh...")
+//					def temp = []
+//					for ( String token : commandToExecute ) {
+//						if ( ! token ) {
+//							continue
+//						}
+//						String tokenTemp = token.replace('"', '\\"')
+//						//					tokenTemp = tokenTemp.replace('{', '\\{')
+//						//					tokenTemp = tokenTemp.replace('}', '\\}')
+//						if ( token != tokenTemp ) {
+//							tokenTemp = '"'+tokenTemp+'"'
+//						} else {
+//							tokenTemp = tokenTemp.replace(' ', '\\ ')
+//						}
+//						log.debug("\t\tnew token: "+tokenTemp)
 //
-//				temp.add(tokenTemp)
-//			}
-//			commandToExecute = temp
-//		}
+//						temp.add(tokenTemp)
+//					}
+//					commandToExecute = temp
+//				}
 
 
 		log.debug('\n\n'+Joiner.on('\n').join(commandToExecute.iterator())+'\n\n')
@@ -691,7 +687,7 @@ class GoldWrap {
 		def keyList = null
 		try {
 			keyList = Lists.newArrayList(
-					Splitter.on('|').trimResults().split(output.get(0)))
+			Splitter.on('|').trimResults().split(output.get(0)))
 			output.remove(0)
 		} catch (IndexOutOfBoundsException ioobe) {
 			log.debug('No data')
@@ -702,7 +698,7 @@ class GoldWrap {
 
 		for ( def line : output ) {
 			List tokens = Lists.newArrayList(
-					Splitter.on('|').trimResults().split(line))
+			Splitter.on('|').trimResults().split(line))
 
 			def map = [keyList, tokens].transpose().collectEntries{ it }
 			def name = map.get(KEY)
