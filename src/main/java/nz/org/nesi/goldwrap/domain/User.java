@@ -13,13 +13,22 @@ public class User {
 
 	private String userId;
 	private String fullName = "";
-	// private String institution = "";
 	private String phone = "";
 	private String email = "";
 	private String organization;
+	private String affiliation = "";
 
 	public User() {
 
+	}
+
+	/**
+	 * No clue what that is supposed to be, ask Andrew.
+	 * 
+	 * @return the affiliation
+	 */
+	public String getAffiliation() {
+		return affiliation;
 	}
 
 	/**
@@ -38,6 +47,15 @@ public class User {
 	 */
 	public String getFullName() {
 		return fullName;
+	}
+
+	/**
+	 * The organization this user belongs to.
+	 * 
+	 * @return the name of the organization
+	 */
+	public String getOrganization() {
+		return organization;
 	}
 
 	// /**
@@ -67,17 +85,25 @@ public class User {
 		return userId;
 	}
 
-	public void setEmail(String email) {
-		this.email = email;
+	public void setAffiliation(String affiliation) {
+		this.affiliation = affiliation;
 	}
 
-	public void setFullName(String fullName) {
-		this.fullName = fullName;
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	// public void setInstitution(String institution) {
 	// this.institution = institution;
 	// }
+
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
+	}
+
+	public void setOrganization(String org) {
+		this.organization = org;
+	}
 
 	public void setPhone(String phone) {
 		this.phone = phone;
@@ -85,13 +111,5 @@ public class User {
 
 	public void setUserId(String userId) {
 		this.userId = userId;
-	}
-
-	public String getOrganization() {
-		return organization;
-	}
-
-	public void setOrganization(String org) {
-		this.organization = org;
 	}
 }

@@ -6,6 +6,7 @@ import javax.jws.WebService;
 import javax.ws.rs.Path;
 
 import nz.org.nesi.goldwrap.api.GoldWrapService;
+import nz.org.nesi.goldwrap.domain.Allocation;
 import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Organization;
 import nz.org.nesi.goldwrap.domain.Project;
@@ -57,7 +58,14 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 	public void createProject(Project project) {
 		String id = project.getProjectId();
 		String desc = project.getDescription();
-		GoldWrap.createProject(id, desc);
+		List<String> machines = project.getMachines();
+
+		GoldWrap.createProject(id, machines, desc);
+	}
+
+	public void addAllocation(String projectId, Allocation alloc) {
+		alloc.validate(true);
+		GoldWrap.addAllocationToProject(projectId, alloc);
 	}
 
 	public void createUser(User user) {
@@ -67,8 +75,9 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		String email = user.getEmail();
 		String phone = user.getPhone();
 		String org = user.getOrganization();
+		String affil = user.getAffiliation();
 
-		GoldWrap.createUser(username, fullname, org, email, phone);
+		GoldWrap.createUser(username, fullname, org, affil, email, phone);
 	}
 
 	public void deleteProject(String id) {
@@ -141,8 +150,10 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 		String id = proj.getProjectId();
 		String desc = proj.getDescription();
+		List<String> machines = proj.getMachines();
+		String clazz = proj.getClazz();
 
-		GoldWrap.modifyProject(id, desc);
+		GoldWrap.modifyProject(id, machines, clazz, desc);
 
 	}
 
@@ -152,8 +163,10 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		String fullname = user.getFullName();
 		String email = user.getEmail();
 		String phone = user.getPhone();
+		String org = user.getOrganization();
+		String affil = user.getAffiliation();
 
-		GoldWrap.modifyUser(username, fullname, email, phone);
+		GoldWrap.modifyUser(username, fullname, org, affil, email, phone);
 
 	}
 }

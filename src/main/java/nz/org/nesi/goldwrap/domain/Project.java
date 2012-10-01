@@ -25,6 +25,25 @@ public class Project {
 	private String projectId = "";
 	private String description = "";
 	private List<String> users = Lists.newLinkedList();
+	private List<String> machines = Lists.newLinkedList();
+
+	private String clazz = "";
+
+	public String getClazz() {
+		return clazz;
+	}
+
+	public void setClazz(String clazz) {
+		this.clazz = clazz;
+	}
+
+	public List<String> getMachines() {
+		return machines;
+	}
+
+	public void setMachines(List<String> machines) {
+		this.machines = machines;
+	}
 
 	public List<String> getUsers() {
 		return users;

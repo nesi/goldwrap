@@ -31,7 +31,7 @@ public class Allocation {
 
 	private String clazz = null;
 
-	private List<Machine> machines = null;
+	private List<String> machines = null;
 
 	/**
 	 * Total allocation amount for all rechargemonths specified.
@@ -51,7 +51,7 @@ public class Allocation {
 	 * 
 	 * @return the name of the site
 	 */
-	public List<Machine> getMachines() {
+	public List<String> getMachines() {
 		return machines;
 	}
 
@@ -100,7 +100,7 @@ public class Allocation {
 		this.clazz = clazz;
 	}
 
-	public void setMachines(List<Machine> machines) {
+	public void setMachines(List<String> machines) {
 		this.machines = machines;
 	}
 

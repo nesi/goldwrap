@@ -11,6 +11,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
+import nz.org.nesi.goldwrap.domain.Allocation;
 import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Organization;
 import nz.org.nesi.goldwrap.domain.Project;
@@ -25,6 +26,19 @@ import nz.org.nesi.goldwrap.errors.GoldCommandFault;
  */
 @WebService(serviceName = "GoldWrapService")
 public interface GoldWrapService {
+
+	/**
+	 * Adds an allocation to a project.
+	 * 
+	 * @param projectId
+	 *            the projectId
+	 * @param alloc
+	 *            the allocation
+	 */
+	@POST
+	@Path("/projects/{projectId}")
+	public void addAllocation(@PathParam("projectId") String projectId,
+			Allocation alloc);
 
 	/**
 	 * Creates a user in Gold.
