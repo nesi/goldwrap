@@ -394,7 +394,7 @@ class GoldWrap {
 		ec.setExecuted(new Date())
 		Process proc = null
 
-		log.debug("Executing command..."+ec.toString())
+		log.info("Command: "+ec.toString())
 		List<String> commandToExecute = []
 		// checking whether we can use gold directly
 		if ( Config.getCommandPrefix() ) {

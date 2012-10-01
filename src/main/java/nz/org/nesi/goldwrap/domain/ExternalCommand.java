@@ -95,7 +95,7 @@ public class ExternalCommand {
 
 	@Override
 	public String toString() {
-		return "command: '" + StringUtils.join(getCommand());
+		return StringUtils.join(getCommand());
 	}
 
 	public void verify() {

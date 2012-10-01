@@ -3,18 +3,26 @@
  <logger name="nz.org.nesi" level="debug"/>
  
 
-<!--  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>/var/log/grisu/grisu.log</file>
+ <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+ 
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>INFO</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+ 
+ 
+    <file>${user.home}/.goldwrap/commands.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>/var/log/grisu/grisu.log.%d{yyyy-MM-dd}.log</fileNamePattern>
+      <fileNamePattern>${user.home}/.goldwrap/commands.log.%d{yyyy-MM-dd}.log</fileNamePattern>
 
       <maxHistory>10</maxHistory>
     </rollingPolicy>
 
     <encoder>
-      <pattern>%-50(%d{HH:mm:ss.SSS} [%level] [%thread]) [%logger{0}] tid=[%X{tid}] csid=[%X{csid}] cmdid=[%X{cmdid}] user=[%X{user}] - %msg%n</pattern>
+      <pattern>%-15(%d{HH:mm:ss.SSS}) ==> %msg%n</pattern>
     </encoder>
-  </appender> --> 
+  </appender> 
 
 
   <appender name="STDOUT"
@@ -67,7 +75,7 @@
 
   <root>
     <level value="warn" />
-<!--     <appender-ref ref="FILE" /> -->
+    <appender-ref ref="FILE" />
 <!--     <appender-ref ref="SYSLOG" /> -->
 <!--     <appender-ref ref="GRAYLOG" /> -->
 <!--     <appender-ref ref="SIFT" /> -->
