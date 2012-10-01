@@ -36,7 +36,7 @@ public interface GoldWrapService {
 	 *            the allocation
 	 */
 	@POST
-	@Path("/projects/{projectId}")
+	@Path("/projects/{projectId}/deposit")
 	public void addAllocation(@PathParam("projectId") String projectId,
 			Allocation alloc);
 
