@@ -11,6 +11,7 @@ import nz.org.nesi.goldwrap.domain.Organization;
 import nz.org.nesi.goldwrap.domain.Project;
 import nz.org.nesi.goldwrap.domain.User;
 import nz.org.nesi.goldwrap.errors.GoldCommandFault;
+import nz.org.nesi.goldwrap.util.GoldWrap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
