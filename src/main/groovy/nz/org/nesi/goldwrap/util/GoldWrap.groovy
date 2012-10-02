@@ -230,6 +230,7 @@ class GoldWrap {
 		def creditLimit = properties.get(CREDIT_LIMIT_KEY)
 		def deposited = properties.get(DEPOSITED_KEY)
 		def desc = properties.get(DESCRIPTION_KEY)
+		def machines = properties.get(MACHINES_KEY)
 
 		Allocation alloc = new Allocation()
 		alloc.setAccountId(Integer.parseInt(account))
@@ -254,6 +255,9 @@ class GoldWrap {
 		if(desc) {
 			alloc.setDescription(desc)
 		}
+		if(machines) {
+			alloc.setMachines(machines.tokenize(','))
+		}
 
 		return alloc
 
@@ -263,7 +267,7 @@ class GoldWrap {
 
 	public static List<Allocation> getAllAllocations() {
 
-		ExternalCommand ec = executeGoldCommand("glsalloc --raw")
+		ExternalCommand ec = executeGoldCommand("glsalloc --show Id,Account,Active,StartTime,EndTime,Amount,CreditLimit,Deposited,Description,Machines --raw")
 
 		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
 

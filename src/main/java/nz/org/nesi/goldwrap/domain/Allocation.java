@@ -1,5 +1,7 @@
 package nz.org.nesi.goldwrap.domain;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -19,6 +21,15 @@ public class Allocation {
 	private int creditLimit;
 	private int deposited;
 	private String description;
+	private List<String> machines;
+
+	public List<String> getMachines() {
+		return machines;
+	}
+
+	public void setMachines(List<String> machines) {
+		this.machines = machines;
+	}
 
 	private Allocation() {
 
