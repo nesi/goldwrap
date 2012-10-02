@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.google.common.collect.Lists;
+
 /**
  * Model for an account.
  * 
@@ -19,10 +21,19 @@ public class Account {
 
 	private List<String> projects = null;
 
-	private List<String> users = null;
-	private List<String> machines = null;
+	private List<String> users = Lists.newArrayList();
+	private List<String> machines = Lists.newArrayList();
 	private String description = "";
 	private String site = null;
+	private String clazz = "";
+
+	public String getClazz() {
+		return clazz;
+	}
+
+	public void setClazz(String clazz) {
+		this.clazz = clazz;
+	}
 
 	private int amount = 0;
 

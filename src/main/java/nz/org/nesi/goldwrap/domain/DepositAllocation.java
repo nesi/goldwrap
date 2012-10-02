@@ -9,6 +9,7 @@ import nz.org.nesi.goldwrap.errors.AllocationFault;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 /**
  * Class to model Allocations.
@@ -31,7 +32,7 @@ public class DepositAllocation {
 
 	private String clazz = null;
 
-	private List<String> machines = null;
+	private List<String> machines = Lists.newArrayList();
 
 	/**
 	 * Total allocation amount for all rechargemonths specified.

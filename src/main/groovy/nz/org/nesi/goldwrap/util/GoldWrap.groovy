@@ -54,8 +54,9 @@ class GoldWrap {
 	static final String END_TIME_KEY = "EndTime"
 	static final String CREDIT_LIMIT_KEY = "CreditLimit"
 	static final String DEPOSITED_KEY = "Deposited"
+	static final String CLASS_KEY = "Class"
 
-	public static void addAllocationToProject(String projectId, DepositAllocation alloc) {
+	public static synchronized void addAllocationToProject(String projectId, DepositAllocation alloc) {
 
 		Project proj = getProject(projectId)
 
@@ -102,6 +103,11 @@ class GoldWrap {
 			}
 
 			start = end.plusDays(1)
+
+			if ( alloc.getClazz() ) {
+				String changeAllocCommand = "Allocation Modify Id==19 Class="+alloc.getClazz()
+			}
+
 
 		}
 
@@ -168,11 +174,21 @@ class GoldWrap {
 		command2.add("-m")
 		command2.add(StringUtils.join(machines, ','))
 
+		if ( proj.getUsers() ) {
+			command2.add("-u")
+			command2.add(StringUtils.join(proj.getUsers(), ','))
+		}
+
+		if ( alloc.getClazz() ) {
+			command2.add("-X")
+			command2.add("Class="+alloc.getClazz())
+		}
+
+
 		ExternalCommand ec2 = executeGoldCommand(command2)
 
 		int exitCode = ec2.getExitCode()
 		if (exitCode != 0) {
-
 
 			throw new AccountFault("Could not create account.",
 			"Could not create associated account for some reason.", 500)
@@ -230,7 +246,8 @@ class GoldWrap {
 		def creditLimit = properties.get(CREDIT_LIMIT_KEY)
 		def deposited = properties.get(DEPOSITED_KEY)
 		def desc = properties.get(DESCRIPTION_KEY)
-		def machines = properties.get(MACHINES_KEY)
+//		def machines = properties.get(MACHINES_KEY)
+//		def clazz = properties.get(CLASS_KEY)
 
 		Allocation alloc = new Allocation()
 		alloc.setAccountId(Integer.parseInt(account))
@@ -255,9 +272,12 @@ class GoldWrap {
 		if(desc) {
 			alloc.setDescription(desc)
 		}
-		if(machines) {
-			alloc.setMachines(machines.tokenize(','))
-		}
+//		if(machines) {
+//			alloc.setMachines(machines.tokenize(','))
+//		}
+//		if ( clazz ) {
+//			alloc.setClazz(clazz)
+//		}
 
 		return alloc
 
@@ -267,7 +287,7 @@ class GoldWrap {
 
 	public static List<Allocation> getAllAllocations() {
 
-		ExternalCommand ec = executeGoldCommand("glsalloc --show Id,Account,Active,StartTime,EndTime,Amount,CreditLimit,Deposited,Description,Machines --raw")
+		ExternalCommand ec = executeGoldCommand("glsalloc --show Id,Account,Active,StartTime,EndTime,Amount,CreditLimit,Deposited,Description --raw")
 
 		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
 
@@ -294,7 +314,7 @@ class GoldWrap {
 
 	private static List<Account> getAllAccounts() {
 
-		ExternalCommand ec = executeGoldCommand("glsaccount --raw")
+		ExternalCommand ec = executeGoldCommand("glsaccount --show Id,Name,Amount,Projects,Users,Machines,Description,Class --raw")
 
 		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
 
@@ -323,6 +343,7 @@ class GoldWrap {
 		def users = properties.get(USERS_KEY)
 		def machines = properties.get(MACHINES_KEY)
 		def desc = properties.get(DESCRIPTION_KEY)
+		def clazz = properties.get(CLASS_KEY)
 
 		Account acc = new Account()
 		acc.setAccountId(Integer.parseInt(id))
@@ -349,6 +370,10 @@ class GoldWrap {
 
 		if ( machines ) {
 			acc.setMachines(machines.tokenize(','))
+		}
+
+		if ( clazz ) {
+			acc.setClazz(clazz)
 		}
 
 		return acc

@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.google.common.collect.Lists;
+
 /**
  * Class to model Allocations.
  * 
@@ -21,7 +23,16 @@ public class Allocation {
 	private int creditLimit;
 	private int deposited;
 	private String description;
-	private List<String> machines;
+	private List<String> machines = Lists.newArrayList();
+	private String clazz = "";
+
+	public String getClazz() {
+		return clazz;
+	}
+
+	public void setClazz(String clazz) {
+		this.clazz = clazz;
+	}
 
 	public List<String> getMachines() {
 		return machines;
