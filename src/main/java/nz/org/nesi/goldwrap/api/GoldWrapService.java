@@ -12,6 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 import nz.org.nesi.goldwrap.domain.Allocation;
+import nz.org.nesi.goldwrap.domain.DepositAllocation;
 import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Organization;
 import nz.org.nesi.goldwrap.domain.Project;
@@ -38,7 +39,18 @@ public interface GoldWrapService {
 	@POST
 	@Path("/projects/{projectId}/deposit")
 	public void addAllocation(@PathParam("projectId") String projectId,
-			Allocation alloc);
+			DepositAllocation alloc);
+
+	/**
+	 * Queries Gold for all allocations that were made for this project.
+	 * 
+	 * @param projectId
+	 *            the name of the project
+	 */
+	@GET
+	@Path("/projects/{projectId}/allocations")
+	public List<Allocation> getAllocations(
+			@PathParam("projectId") String projectId);
 
 	/**
 	 * Creates a user in Gold.

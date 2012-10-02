@@ -13,26 +13,26 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Account {
 
+	private String name = "";
+
 	private Integer accountId = -1;
-	private List<Project> projects = null;
-	private List<User> users = null;
-	private List<Machine> machines = null;
 
-	/**
-	 * Returns all machines that are associated with this account.
-	 * 
-	 * @return the machines
-	 */
-	public List<Machine> getMachines() {
-		return machines;
-	}
+	private List<String> projects = null;
 
-	public void setMachines(List<Machine> machines) {
-		this.machines = machines;
-	}
-
+	private List<String> users = null;
+	private List<String> machines = null;
 	private String description = "";
 	private String site = null;
+
+	private int amount = 0;
+
+	public int getAmount() {
+		return amount;
+	}
+
+	public void setAmount(int amount) {
+		this.amount = amount;
+	}
 
 	public Account() {
 	}
@@ -60,11 +60,24 @@ public class Account {
 	}
 
 	/**
+	 * Returns all machines that are associated with this account.
+	 * 
+	 * @return the machines
+	 */
+	public List<String> getMachines() {
+		return machines;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	/**
 	 * The projects this account is associated with.
 	 * 
 	 * @return the projects
 	 */
-	public List<Project> getProjects() {
+	public List<String> getProjects() {
 		return projects;
 	}
 
@@ -77,7 +90,7 @@ public class Account {
 	 * 
 	 * @return the users
 	 */
-	public List<User> getUsers() {
+	public List<String> getUsers() {
 		return users;
 	}
 
@@ -89,7 +102,15 @@ public class Account {
 		this.description = description;
 	}
 
-	public void setProjects(List<Project> project) {
+	public void setMachines(List<String> machines) {
+		this.machines = machines;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setProjects(List<String> project) {
 		this.projects = project;
 	}
 
@@ -97,7 +118,7 @@ public class Account {
 		this.site = site;
 	}
 
-	public void setUsers(List<User> users) {
+	public void setUsers(List<String> users) {
 		this.users = users;
 	}
 

@@ -2,7 +2,9 @@ package nz.org.nesi.goldwrap.util
 
 import groovy.util.logging.Slf4j
 import nz.org.nesi.goldwrap.Config
+import nz.org.nesi.goldwrap.domain.Account
 import nz.org.nesi.goldwrap.domain.Allocation
+import nz.org.nesi.goldwrap.domain.DepositAllocation
 import nz.org.nesi.goldwrap.domain.ExternalCommand
 import nz.org.nesi.goldwrap.domain.Machine
 import nz.org.nesi.goldwrap.domain.Organization
@@ -47,9 +49,13 @@ class GoldWrap {
 	static final String EMAIL_KEY = "EmailAddress"
 	static final String FULLNAME_KEY = "CommonName"
 	static final String AFFILIATION_KEY = "Affiliation"
+	static final String ACCOUNT_KEY = "Account"
+	static final String START_TIME_KEY = "StartTime"
+	static final String END_TIME_KEY = "EndTime"
+	static final String CREDIT_LIMIT_KEY = "CreditLimit"
+	static final String DEPOSITED_KEY = "Deposited"
 
-
-	public static void addAllocationToProject(String projectId, Allocation alloc) {
+	public static void addAllocationToProject(String projectId, DepositAllocation alloc) {
 
 		Project proj = getProject(projectId)
 
@@ -140,7 +146,7 @@ class GoldWrap {
 	 * @param alloc
 	 * @return
 	 */
-	private static int createAccountAndChangeProject(Project proj, Allocation alloc) {
+	private static int createAccountAndChangeProject(Project proj, DepositAllocation alloc) {
 
 		List<String> machines = alloc.getMachines()
 
@@ -193,6 +199,156 @@ class GoldWrap {
 
 	}
 
+	public static List<Allocation> getAllocations(String projectId) {
+
+
+		List<Account> accounts = getAccounts(projectId)
+
+		List<Integer> accountIds = accounts.collect { it ->
+			it.getAccountId()
+		}
+
+		return getAllAllocations().findAll { it ->
+			accountIds.contains(it.getAccountId())
+		}
+
+	}
+
+	public static Allocation getAllocation(Map properties) {
+
+		def id = properties.get(ID_KEY)
+
+		if ( ! id ) {
+			throw new AccountFault("Can't get Account.", "No accountId.", 500)
+		}
+
+		def account = properties.get(ACCOUNT_KEY)
+		def active = properties.get(ACTIVE_KEY)
+		def startTime = properties.get(START_TIME_KEY)
+		def endTime = properties.get(END_TIME_KEY)
+		def amount = properties.get(AMOUNT_KEY)
+		def creditLimit = properties.get(CREDIT_LIMIT_KEY)
+		def deposited = properties.get(DEPOSITED_KEY)
+		def desc = properties.get(DESCRIPTION_KEY)
+
+		Allocation alloc = new Allocation()
+		alloc.setAccountId(Integer.parseInt(account))
+		if ( active ) {
+			alloc.setActive(Boolean.parseBoolean(active))
+		}
+		if (startTime) {
+			alloc.setStartDate(startTime)
+		}
+		if (endTime) {
+			alloc.setEndDate(endTime)
+		}
+		if (amount) {
+			alloc.setAmount(Integer.parseInt(amount))
+		}
+		if(creditLimit) {
+			alloc.setAmount(Integer.parseInt(creditLimit))
+		}
+		if(deposited) {
+			alloc.setDeposited(Integer.parseInt(deposited))
+		}
+		if(desc) {
+			alloc.setDescription(desc)
+		}
+
+		return alloc
+
+
+
+	}
+
+	public static List<Allocation> getAllAllocations() {
+
+		ExternalCommand ec = executeGoldCommand("glsalloc --raw")
+
+		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
+
+		def allocs = []
+
+		map.each { name, properties ->
+			Allocation a = getAllocation(properties)
+			allocs.add(a)
+		}
+
+		return allocs
+
+	}
+
+	private static List<Account> getAccounts(String projectId) {
+
+		return getAllAccounts().findAll { it ->
+
+			it.getProjects().contains(projectId)
+		}
+
+
+	}
+
+	private static List<Account> getAllAccounts() {
+
+		ExternalCommand ec = executeGoldCommand("glsaccount --raw")
+
+		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
+
+		def accounts = []
+
+		map.each { name, properties ->
+			Account a = getAccount(properties)
+			accounts.add(a)
+		}
+
+		return accounts
+
+	}
+
+	public static Account getAccount(Map properties) {
+
+		def id = properties.get(ID_KEY)
+
+		if ( ! id ) {
+			throw new AccountFault("Can't get Account.", "No accountId.", 500)
+		}
+
+		def name = properties.get(NAME_KEY)
+		def amount = properties.get(AMOUNT_KEY)
+		def projects = properties.get(PROJECTS_KEY)
+		def users = properties.get(USERS_KEY)
+		def machines = properties.get(MACHINES_KEY)
+		def desc = properties.get(DESCRIPTION_KEY)
+
+		Account acc = new Account()
+		acc.setAccountId(Integer.parseInt(id))
+
+		if ( name ) {
+			acc.setName(name)
+		}
+
+		if ( amount ) {
+			acc.setAmount(Integer.parseInt(amount))
+		}
+
+		if ( projects ) {
+			acc.setProjects(projects.tokenize(','))
+		}
+
+		if ( desc ) {
+			acc.setDescription(desc)
+		}
+
+		if ( users ) {
+			acc.setUsers(users.tokenize(','))
+		}
+
+		if ( machines ) {
+			acc.setMachines(machines.tokenize(','))
+		}
+
+		return acc
+	}
 
 	public static void addUserToProject(String projectId, String username) {
 
@@ -895,7 +1051,7 @@ class GoldWrap {
 		def keyList = null
 		try {
 			keyList = Lists.newArrayList(
-			Splitter.on('|').trimResults().split(output.get(0)))
+					Splitter.on('|').trimResults().split(output.get(0)))
 			output.remove(0)
 		} catch (IndexOutOfBoundsException ioobe) {
 			log.debug('No data')
@@ -906,7 +1062,7 @@ class GoldWrap {
 
 		for ( def line : output ) {
 			List tokens = Lists.newArrayList(
-			Splitter.on('|').trimResults().split(line))
+					Splitter.on('|').trimResults().split(line))
 
 			def map = [keyList, tokens].transpose().collectEntries{ it }
 			def name = map.get(KEY)
