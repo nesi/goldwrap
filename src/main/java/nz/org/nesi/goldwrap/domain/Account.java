@@ -27,6 +27,11 @@ public class Account {
 	private String site = null;
 	private String clazz = "";
 
+	/**
+	 * The class of the account: ResearchFunded, ProposalDevelopment, ...
+	 * 
+	 * @return
+	 */
 	public String getClazz() {
 		return clazz;
 	}

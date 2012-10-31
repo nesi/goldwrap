@@ -148,7 +148,7 @@ class GoldWrap {
 	/**
 	 * Creates a new account for each new allocation.
 	 *
-	 * @param proj
+	 * @param proj the project
 	 * @param alloc
 	 * @return
 	 */

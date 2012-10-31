@@ -138,6 +138,12 @@ public interface GoldWrapService {
 	@Path("/projects")
 	public void createProject(Project p);
 
+	/**
+	 * Deletes the project.
+	 * 
+	 * @param id
+	 *            the projectid
+	 */
 	@DELETE
 	@Path("/projects/{projectId}")
 	public void deleteProject(@PathParam("projectId") String id);
