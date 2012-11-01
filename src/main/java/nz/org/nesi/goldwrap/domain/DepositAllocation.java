@@ -24,14 +24,16 @@ public class DepositAllocation {
 			"ProposalDevelopment", "ResearchFunded", "ResearchUnfunded",
 			"Private", "Collaborator");
 
-	private Integer allocation = -1;
+	private Long allocation = -1L;
 	private Integer rechargemonths = -1;
-	private Integer recharge = -1;
+	// private Integer recharge = -1;
+	private Integer startday = -1;
+
 	private Integer startmonth = -1;
+
 	private Integer startyear = -1;
 
 	private String clazz = null;
-
 	private List<String> machines = Lists.newArrayList();
 
 	/**
@@ -39,7 +41,7 @@ public class DepositAllocation {
 	 * 
 	 * @return the allocation
 	 */
-	public Integer getAllocation() {
+	public Long getAllocation() {
 		return allocation;
 	}
 
@@ -56,15 +58,15 @@ public class DepositAllocation {
 		return machines;
 	}
 
-	/**
-	 * Number of recharge periods.
-	 * 
-	 * @return number of recharge periods
-	 */
-	public Integer getRecharge() {
-		return recharge;
-	}
-
+	// /**
+	// * Number of recharge periods.
+	// *
+	// * @return number of recharge periods
+	// */
+	// public Integer getRecharge() {
+	// return recharge;
+	// }
+	//
 	/**
 	 * Number of months per recharge period - assume that recharge periods
 	 * straddle whole months.
@@ -73,6 +75,10 @@ public class DepositAllocation {
 	 */
 	public Integer getRechargemonths() {
 		return rechargemonths;
+	}
+
+	public Integer getStartday() {
+		return startday;
 	}
 
 	/**
@@ -93,7 +99,7 @@ public class DepositAllocation {
 		return startyear;
 	}
 
-	public void setAllocation(Integer allocation) {
+	public void setAllocation(Long allocation) {
 		this.allocation = allocation;
 	}
 
@@ -105,12 +111,16 @@ public class DepositAllocation {
 		this.machines = machines;
 	}
 
-	public void setRecharge(Integer recharge) {
-		this.recharge = recharge;
-	}
-
+	// public void setRecharge(Integer recharge) {
+	// this.recharge = recharge;
+	// }
+	//
 	public void setRechargemonths(Integer rechargemonths) {
 		this.rechargemonths = rechargemonths;
+	}
+
+	public void setStartday(Integer startday) {
+		this.startday = startday;
 	}
 
 	public void setStartmonth(Integer startmonth) {
@@ -138,16 +148,20 @@ public class DepositAllocation {
 					"Allocation must be > 0");
 		}
 
-		if (recharge < 0) {
-			throw new AllocationFault(this, "Invalid Allocation.",
-					"recharge must be > 0");
-		}
-
+		// if (recharge < 0) {
+		// throw new AllocationFault(this, "Invalid Allocation.",
+		// "recharge must be > 0");
+		// }
+		//
 		if (rechargemonths < 0) {
 			throw new AllocationFault(this, "Invalid Allocation.",
 					"rechargemonths must be > 0");
 		}
 
+		if (startday < 1 || startday > 31) {
+			throw new AllocationFault(this, "Invalid Allocation.",
+					"startmonth must be between 1 and 31");
+		}
 		if (startmonth < 1 || startmonth > 12) {
 			throw new AllocationFault(this, "Invalid Allocation.",
 					"startmonth must be between 1 and 12");

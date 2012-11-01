@@ -31,6 +31,11 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		initialize();
 	}
 
+	public void addAllocation(String projectId, DepositAllocation alloc) {
+		alloc.validate(true);
+		GoldWrap.addAllocationToProject(projectId, alloc);
+	}
+
 	public void addUserToProject(String projectId, String username) {
 
 		GoldWrap.addUserToProject(projectId, username);
@@ -64,11 +69,6 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		GoldWrap.createProject(id, machines, desc);
 	}
 
-	public void addAllocation(String projectId, DepositAllocation alloc) {
-		alloc.validate(true);
-		GoldWrap.addAllocationToProject(projectId, alloc);
-	}
-
 	public void createUser(User user) {
 
 		String username = user.getUserId();
@@ -93,6 +93,12 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	public List<Machine> getAllMachines() {
 		return GoldWrap.getAllMachines();
+	}
+
+	public List<Allocation> getAllocations(String projectId) {
+
+		return GoldWrap.getAllocations(projectId);
+
 	}
 
 	public List<Organization> getAllOrgainzations() {
@@ -168,12 +174,6 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		String affil = user.getAffiliation();
 
 		GoldWrap.modifyUser(username, fullname, org, affil, email, phone);
-
-	}
-
-	public List<Allocation> getAllocations(String projectId) {
-
-		return GoldWrap.getAllocations(projectId);
 
 	}
 }

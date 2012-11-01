@@ -19,9 +19,9 @@ public class Allocation {
 	private boolean active = true;
 	private String startDate;
 	private String endDate;
-	private int amount;
-	private int creditLimit;
-	private int deposited;
+	private long amount;
+	private long creditLimit;
+	private long deposited;
 	private String description;
 	private List<String> machines = Lists.newArrayList();
 	private String clazz = "";
@@ -78,27 +78,27 @@ public class Allocation {
 		this.endDate = endDate;
 	}
 
-	public int getAmount() {
+	public long getAmount() {
 		return amount;
 	}
 
-	public void setAmount(int amount) {
+	public void setAmount(long amount) {
 		this.amount = amount;
 	}
 
-	public int getCreditLimit() {
+	public long getCreditLimit() {
 		return creditLimit;
 	}
 
-	public void setCreditLimit(int creditLimit) {
+	public void setCreditLimit(long creditLimit) {
 		this.creditLimit = creditLimit;
 	}
 
-	public int getDeposited() {
+	public long getDeposited() {
 		return deposited;
 	}
 
-	public void setDeposited(int deposited) {
+	public void setDeposited(long deposited) {
 		this.deposited = deposited;
 	}
 

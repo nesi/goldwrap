@@ -40,13 +40,13 @@ public class Account {
 		this.clazz = clazz;
 	}
 
-	private int amount = 0;
+	private long amount = 0;
 
-	public int getAmount() {
+	public long getAmount() {
 		return amount;
 	}
 
-	public void setAmount(int amount) {
+	public void setAmount(long amount) {
 		this.amount = amount;
 	}
 

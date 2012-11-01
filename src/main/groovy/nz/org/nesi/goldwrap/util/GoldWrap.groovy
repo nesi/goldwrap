@@ -62,15 +62,14 @@ class GoldWrap {
 
 		int acc_id = createAccountAndChangeProject(proj, alloc)
 
-		DateMidnight start = new DateMidnight(alloc.getStartyear(), 	alloc.getStartmonth(), 1)
+		DateMidnight start = new DateMidnight(alloc.getStartyear(), 	alloc.getStartmonth(), alloc.getStartday())
 		DateMidnight end = null
 
 		log.debug("Depositing allocation into project " + projectId)
 
-		for (int i = 0; i < alloc.getRecharge(); i++) {
 
 			end = start.plusMonths(alloc.getRechargemonths()).minusDays(1)
-			log.debug("deposit " + (i + 1) + " for period: {} - {}", start.toString(), end.toString())
+			log.debug("deposit for period: {} - {}", start.toString(), end.toString())
 			List<String> depositcommand = Lists.newArrayList("gdeposit")
 			depositcommand.add("-a")
 			depositcommand.add(Integer.toString(acc_id))
@@ -84,16 +83,19 @@ class GoldWrap {
 			depositcommand.add(endString)
 			depositcommand.add("-z")
 
-			Integer allocationPerPeriod = alloc.getAllocation() / alloc.getRecharge()
-
-			depositcommand.add(allocationPerPeriod.toString())
-			depositcommand.add("-L")
-			depositcommand.add(new Integer(allocationPerPeriod * 3).toString())
+//			Long allocationPerPeriod = alloc.getAllocation()
+//
+//			depositcommand.add(allocationPerPeriod.toString())
+//			depositcommand.add("-L")
+//			depositcommand.add(allocationPerPeriod)
 			depositcommand.add("-h")
 
 			// String clazz = alloc.getClazz();
 			// depositcommand.add("-X");
 			// depositcommand.add("Class=" + clazz);
+
+			def amount = alloc.getAllocation()
+			depositcommand.add(Long.toString(amount))
 
 			ExternalCommand ec = executeGoldCommand(depositcommand)
 
@@ -102,14 +104,13 @@ class GoldWrap {
 				Joiner.on('\n').join(ec.getStdErr()));
 			}
 
-			start = end.plusDays(1)
+//			start = end.plusDays(1)
+//
+//			if ( alloc.getClazz() ) {
+//				String changeAllocCommand = "Allocation Modify Id==19 Class="+alloc.getClazz()
+//			}
 
-			if ( alloc.getClazz() ) {
-				String changeAllocCommand = "Allocation Modify Id==19 Class="+alloc.getClazz()
-			}
 
-
-		}
 
 	}
 
@@ -261,13 +262,13 @@ class GoldWrap {
 			alloc.setEndDate(endTime)
 		}
 		if (amount) {
-			alloc.setAmount(Integer.parseInt(amount))
+			alloc.setAmount(Long.parseLong(amount))
 		}
 		if(creditLimit) {
-			alloc.setAmount(Integer.parseInt(creditLimit))
+			alloc.setCreditLimit(Long.parseLong(creditLimit))
 		}
 		if(deposited) {
-			alloc.setDeposited(Integer.parseInt(deposited))
+			alloc.setDeposited(Long.parseLong(deposited))
 		}
 		if(desc) {
 			alloc.setDescription(desc)
@@ -353,7 +354,7 @@ class GoldWrap {
 		}
 
 		if ( amount ) {
-			acc.setAmount(Integer.parseInt(amount))
+			acc.setAmount(Long.parseLong(amount))
 		}
 
 		if ( projects ) {
