@@ -286,7 +286,7 @@ class GoldWrap {
 		def id = properties.get(ID_KEY)
 
 		if ( ! id ) {
-			throw new AccountFault("Can't get Account.", "No accountId.", 500)
+			throw new AccountFault("Can't get Allocation.", "No allocation id.", 500)
 		}
 
 		def account = properties.get(ACCOUNT_KEY)
@@ -301,6 +301,7 @@ class GoldWrap {
 //		def clazz = properties.get(CLASS_KEY)
 
 		Allocation alloc = new Allocation()
+		alloc.setAllocationId(Integer.parseInt(id))
 		alloc.setAccountId(Integer.parseInt(account))
 		if ( active ) {
 			alloc.setActive(Boolean.parseBoolean(active))
