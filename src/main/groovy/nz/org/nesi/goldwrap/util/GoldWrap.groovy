@@ -114,6 +114,56 @@ class GoldWrap {
 
 	}
 
+	private static void syncProjectAccounts(Project p) {
+
+		def accounts = getAllAccounts().findAll { it ->
+			it.getProjects().contains(p.getProjectId())
+		}
+
+		List<String> projectUsers = p.getUsers()
+
+		accounts.each { a ->
+
+			List<String> accountUsers = a.getUsers()
+			List<String> removeUsers = accountUsers.findAll { it ->
+				! projectUsers.contains(it)
+			}
+			List<String> addUsers = projectUsers.findAll { it ->
+				! accountUsers.contains(it)
+			}
+
+			if ( removeUsers ) {
+				List<String> command = Lists.newArrayList("gchaccount")
+				command.add("--delUsers")
+				command.add(removeUsers.join(","))
+				command.add("-a")
+				command.add(a.getAccountId().toString())
+
+				ExternalCommand ec = executeGoldCommand(command)
+
+				if (ec.getExitCode() != 0) {
+					throw new AccountFault("Could not change account "+a.getAccountId(), "Removing users "+removeUsers.join(",")+ " failed.")
+				}
+			}
+			if ( addUsers ) {
+				List<String> command = Lists.newArrayList("gchaccount")
+				command.add("--addUsers")
+				command.add(addUsers.join(","))
+				command.add("-a")
+				command.add(a.getAccountId().toString())
+
+				ExternalCommand ec = executeGoldCommand(command)
+
+				if (ec.getExitCode() != 0) {
+					throw new AccountFault("Could not change account "+a.getAccountId(), "Adding users "+addUsers.join(",")+ " failed.")
+				}
+			}
+
+		}
+
+
+	}
+
 	public static String generateMachinesString(Collection<Machine> machines) {
 
 		List<String> allMachineNames = getAllMachineNames()
@@ -399,6 +449,9 @@ class GoldWrap {
 		if (! p.getUsers().contains(username)) {
 			throw new ProjectFault("Could not add user "+username+" to project "+projectId+".", "Unknown reason", 500)
 		}
+
+		log.debug('Synchronizing project accounts...')
+		syncProjectAccounts(p)
 	}
 
 	public static void createMachine(String name, String arch, String os, String desc) {
@@ -937,6 +990,7 @@ class GoldWrap {
 
 		println p.getUsers()
 	}
+
 
 	public static void modifyMachine(String name, String arch, String os, String desc) {
 
