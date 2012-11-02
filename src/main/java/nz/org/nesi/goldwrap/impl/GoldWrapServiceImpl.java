@@ -176,4 +176,18 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		GoldWrap.modifyUser(username, fullname, org, affil, email, phone);
 
 	}
+
+	public void deleteAllocation(int id) {
+
+		GoldWrap.deleteAllocation(id);
+
+	}
+
+	public Allocation getAllocation(int id) {
+		return GoldWrap.getAllocation(id);
+	}
+
+	public void modifyAllocation(Allocation alloc) {
+		GoldWrap.modifyAllocation(alloc);
+	}
 }

@@ -42,6 +42,31 @@ public interface GoldWrapService {
 			DepositAllocation alloc);
 
 	/**
+	 * Delete the allocation with the given id.
+	 * 
+	 * @param id
+	 *            allocation id
+	 */
+	@DELETE
+	@Path("/allocations/{allocationId}")
+	public void deleteAllocation(@PathParam("allocationId") int id);
+
+	@POST
+	@Path("/allocations")
+	public void modifyAllocation(Allocation alloc);
+
+	/**
+	 * Get the allocation with the given id.
+	 * 
+	 * @param id
+	 *            allocation id
+	 * @return
+	 */
+	@GET
+	@Path("/allocations/{allocationId}")
+	public Allocation getAllocation(@PathParam("allocationId") int id);
+
+	/**
 	 * Queries Gold for all allocations that were made for this project.
 	 * 
 	 * @param projectId

@@ -114,86 +114,28 @@ class GoldWrap {
 
 	}
 
-	private static void syncProjectAccounts(Project p) {
+	public static void addUserToProject(String projectId, String username) {
 
-		def accounts = getAllAccounts().findAll { it ->
-			it.getProjects().contains(p.getProjectId())
+		if ( ! isRegistered(username) ) {
+			throw new UserFault("Can't retrieve user.", "User " + username
+			+ " not in Gold database.", 404)
 		}
 
-		List<String> projectUsers = p.getUsers()
-
-		accounts.each { a ->
-
-			List<String> accountUsers = a.getUsers()
-			List<String> removeUsers = accountUsers.findAll { it ->
-				! projectUsers.contains(it)
-			}
-			List<String> addUsers = projectUsers.findAll { it ->
-				! accountUsers.contains(it)
-			}
-
-			if ( removeUsers ) {
-				List<String> command = Lists.newArrayList("gchaccount")
-				command.add("--delUsers")
-				command.add(removeUsers.join(","))
-				command.add("-a")
-				command.add(a.getAccountId().toString())
-
-				ExternalCommand ec = executeGoldCommand(command)
-
-				if (ec.getExitCode() != 0) {
-					throw new AccountFault("Could not change account "+a.getAccountId(), "Removing users "+removeUsers.join(",")+ " failed.")
-				}
-			}
-			if ( addUsers ) {
-				List<String> command = Lists.newArrayList("gchaccount")
-				command.add("--addUsers")
-				command.add(addUsers.join(","))
-				command.add("-a")
-				command.add(a.getAccountId().toString())
-
-				ExternalCommand ec = executeGoldCommand(command)
-
-				if (ec.getExitCode() != 0) {
-					throw new AccountFault("Could not change account "+a.getAccountId(), "Adding users "+addUsers.join(",")+ " failed.")
-				}
-			}
-
+		if ( ! projectExists(projectId) ) {
+			throw new ProjectFault("Can't find project.", "Project "+projectId+" not in Gold database.", 404)
 		}
 
+		log.debug("Adding user "+username+" to project "+projectId)
+		ExternalCommand ec = executeGoldCommand('gchproject --addUser '+username+ " "+projectId)
 
-	}
+		Project p = getProject(projectId)
 
-	public static String generateMachinesString(Collection<Machine> machines) {
-
-		List<String> allMachineNames = getAllMachineNames()
-
-		SortedSet<String> string = Sets.newTreeSet()
-
-		for ( Machine m : machines ) {
-
-			if ( ! allMachineNames.contains(m.getName())) {
-				throw new MachineFault(m, "Machine "+m.getName()+" not found.", "Machine "+m.getName()+" not in Gold database.")
-			}
-
-			string.add(m.getName())
+		if (! p.getUsers().contains(username)) {
+			throw new ProjectFault("Could not add user "+username+" to project "+projectId+".", "Unknown reason", 500)
 		}
 
-		return StringUtils.join(string, ",")
-
-	}
-
-	public static List<String> getAllMachineNames() {
-
-		List<Machine> allMachines = getAllMachines()
-
-		List<String> names = Lists.newLinkedList()
-
-		for (Machine m : allMachines) {
-			names.add(m.getName())
-		}
-		return names
-
+		log.debug('Synchronizing project accounts...')
+		syncProjectAccounts(p)
 	}
 
 	/**
@@ -264,195 +206,6 @@ class GoldWrap {
 			"Could not parse account nr for project.", e)
 		}
 
-	}
-
-	public static List<Allocation> getAllocations(String projectId) {
-
-
-		List<Account> accounts = getAccounts(projectId)
-
-		List<Integer> accountIds = accounts.collect { it ->
-			it.getAccountId()
-		}
-
-		return getAllAllocations().findAll { it ->
-			accountIds.contains(it.getAccountId())
-		}
-
-	}
-
-	public static Allocation getAllocation(Map properties) {
-
-		def id = properties.get(ID_KEY)
-
-		if ( ! id ) {
-			throw new AccountFault("Can't get Allocation.", "No allocation id.", 500)
-		}
-
-		def account = properties.get(ACCOUNT_KEY)
-		def active = properties.get(ACTIVE_KEY)
-		def startTime = properties.get(START_TIME_KEY)
-		def endTime = properties.get(END_TIME_KEY)
-		def amount = properties.get(AMOUNT_KEY)
-		def creditLimit = properties.get(CREDIT_LIMIT_KEY)
-		def deposited = properties.get(DEPOSITED_KEY)
-		def desc = properties.get(DESCRIPTION_KEY)
-//		def machines = properties.get(MACHINES_KEY)
-//		def clazz = properties.get(CLASS_KEY)
-
-		Allocation alloc = new Allocation()
-		alloc.setAllocationId(Integer.parseInt(id))
-		alloc.setAccountId(Integer.parseInt(account))
-		if ( active ) {
-			alloc.setActive(Boolean.parseBoolean(active))
-		}
-		if (startTime) {
-			alloc.setStartDate(startTime)
-		}
-		if (endTime) {
-			alloc.setEndDate(endTime)
-		}
-		if (amount) {
-			alloc.setAmount(Long.parseLong(amount))
-		}
-		if(creditLimit) {
-			alloc.setCreditLimit(Long.parseLong(creditLimit))
-		}
-		if(deposited) {
-			alloc.setDeposited(Long.parseLong(deposited))
-		}
-		if(desc) {
-			alloc.setDescription(desc)
-		}
-//		if(machines) {
-//			alloc.setMachines(machines.tokenize(','))
-//		}
-//		if ( clazz ) {
-//			alloc.setClazz(clazz)
-//		}
-
-		return alloc
-
-
-
-	}
-
-	public static List<Allocation> getAllAllocations() {
-
-		ExternalCommand ec = executeGoldCommand("glsalloc --show Id,Account,Active,StartTime,EndTime,Amount,CreditLimit,Deposited,Description --raw")
-
-		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
-
-		def allocs = []
-
-		map.each { name, properties ->
-			Allocation a = getAllocation(properties)
-			allocs.add(a)
-		}
-
-		return allocs
-
-	}
-
-	private static List<Account> getAccounts(String projectId) {
-
-		return getAllAccounts().findAll { it ->
-
-			it.getProjects().contains(projectId)
-		}
-
-
-	}
-
-	private static List<Account> getAllAccounts() {
-
-		ExternalCommand ec = executeGoldCommand("glsaccount --show Id,Name,Amount,Projects,Users,Machines,Description,Class --raw")
-
-		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
-
-		def accounts = []
-
-		map.each { name, properties ->
-			Account a = getAccount(properties)
-			accounts.add(a)
-		}
-
-		return accounts
-
-	}
-
-	public static Account getAccount(Map properties) {
-
-		def id = properties.get(ID_KEY)
-
-		if ( ! id ) {
-			throw new AccountFault("Can't get Account.", "No accountId.", 500)
-		}
-
-		def name = properties.get(NAME_KEY)
-		def amount = properties.get(AMOUNT_KEY)
-		def projects = properties.get(PROJECTS_KEY)
-		def users = properties.get(USERS_KEY)
-		def machines = properties.get(MACHINES_KEY)
-		def desc = properties.get(DESCRIPTION_KEY)
-		def clazz = properties.get(CLASS_KEY)
-
-		Account acc = new Account()
-		acc.setAccountId(Integer.parseInt(id))
-
-		if ( name ) {
-			acc.setName(name)
-		}
-
-		if ( amount ) {
-			acc.setAmount(Long.parseLong(amount))
-		}
-
-		if ( projects ) {
-			acc.setProjects(projects.tokenize(','))
-		}
-
-		if ( desc ) {
-			acc.setDescription(desc)
-		}
-
-		if ( users ) {
-			acc.setUsers(users.tokenize(','))
-		}
-
-		if ( machines ) {
-			acc.setMachines(machines.tokenize(','))
-		}
-
-		if ( clazz ) {
-			acc.setClazz(clazz)
-		}
-
-		return acc
-	}
-
-	public static void addUserToProject(String projectId, String username) {
-
-		if ( ! isRegistered(username) ) {
-			throw new UserFault("Can't retrieve user.", "User " + username
-			+ " not in Gold database.", 404)
-		}
-
-		if ( ! projectExists(projectId) ) {
-			throw new ProjectFault("Can't find project.", "Project "+projectId+" not in Gold database.", 404)
-		}
-
-		log.debug("Adding user "+username+" to project "+projectId)
-		ExternalCommand ec = executeGoldCommand('gchproject --addUser '+username+ " "+projectId)
-
-		Project p = getProject(projectId)
-
-		if (! p.getUsers().contains(username)) {
-			throw new ProjectFault("Could not add user "+username+" to project "+projectId+".", "Unknown reason", 500)
-		}
-
-		log.debug('Synchronizing project accounts...')
-		syncProjectAccounts(p)
 	}
 
 	public static void createMachine(String name, String arch, String os, String desc) {
@@ -608,6 +361,65 @@ class GoldWrap {
 		}
 	}
 
+	private static boolean allocationExists(int id) {
+
+		for (Allocation a : getAllAllocations()) {
+			if ( id == a.getAllocationId()) {
+				return true
+			}
+		}
+		return false
+
+
+	}
+
+	public static void modifyAllocation(Allocation alloc) {
+
+		int id = alloc.getAllocationId()
+
+		if ( ! allocationExists(id) ) {
+			throw new AllocationFault("Can't modify allocation "+id, "Allocation does not exist in Gold database.", 404);
+		}
+
+		String startDate = alloc.getStartDate()
+		String endDate = alloc.getEndDate()
+		Long creditLimit = alloc.getCreditLimit()
+		String desc = alloc.getDescription()
+
+		List<String> command = Lists.newArrayList("gchalloc")
+
+		if ( startDate ) {
+			command.add("-s")
+			command.add(startDate)
+		}
+		if ( endDate ) {
+			command.add("-e")
+			command.add(endDate)
+		}
+		if ( creditLimit ) {
+			command.add("-L")
+			command.add(Long.toString(creditLimit))
+		}
+		if ( desc ) {
+			command.add("-d")
+			command.add(desc)
+		}
+
+		command.add(Integer.toString(id))
+
+		ExternalCommand ec = executeGoldCommand(command)
+
+	}
+
+	public static void deleteAllocation(int id) {
+
+		ExternalCommand ec = executeGoldCommand("grmalloc "+id)
+
+		if (  allocationExists(id) ) {
+			throw new AllocationFault("Could not delete allocation "+id+".", "Unknown reason")
+		}
+	}
+
 	public static void deleteProject(String id) {
 		ExternalCommand ec = executeGoldCommand("grmproject "+id)
 
@@ -724,6 +536,132 @@ class GoldWrap {
 		return executeGoldCommand(list)
 	}
 
+	public static String generateMachinesString(Collection<Machine> machines) {
+
+		List<String> allMachineNames = getAllMachineNames()
+
+		SortedSet<String> string = Sets.newTreeSet()
+
+		for ( Machine m : machines ) {
+
+			if ( ! allMachineNames.contains(m.getName())) {
+				throw new MachineFault(m, "Machine "+m.getName()+" not found.", "Machine "+m.getName()+" not in Gold database.")
+			}
+
+			string.add(m.getName())
+		}
+
+		return StringUtils.join(string, ",")
+
+	}
+
+	public static Account getAccount(Map properties) {
+
+		def id = properties.get(ID_KEY)
+
+		if ( ! id ) {
+			throw new AccountFault("Can't get Account.", "No accountId.", 500)
+		}
+
+		def name = properties.get(NAME_KEY)
+		def amount = properties.get(AMOUNT_KEY)
+		def projects = properties.get(PROJECTS_KEY)
+		def users = properties.get(USERS_KEY)
+		def machines = properties.get(MACHINES_KEY)
+		def desc = properties.get(DESCRIPTION_KEY)
+		def clazz = properties.get(CLASS_KEY)
+
+		Account acc = new Account()
+		acc.setAccountId(Integer.parseInt(id))
+
+		if ( name ) {
+			acc.setName(name)
+		}
+
+		if ( amount ) {
+			acc.setAmount(Long.parseLong(amount))
+		}
+
+		if ( projects ) {
+			acc.setProjects(projects.tokenize(','))
+		}
+
+		if ( desc ) {
+			acc.setDescription(desc)
+		}
+
+		if ( users ) {
+			acc.setUsers(users.tokenize(','))
+		}
+
+		if ( machines ) {
+			acc.setMachines(machines.tokenize(','))
+		}
+
+		if ( clazz ) {
+			acc.setClazz(clazz)
+		}
+
+		return acc
+	}
+
+	private static List<Account> getAccounts(String projectId) {
+
+		return getAllAccounts().findAll { it ->
+
+			it.getProjects().contains(projectId)
+		}
+
+
+	}
+
+	private static List<Account> getAllAccounts() {
+
+		ExternalCommand ec = executeGoldCommand("glsaccount --show Id,Name,Amount,Projects,Users,Machines,Description,Class --raw")
+
+		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
+
+		def accounts = []
+
+		map.each { name, properties ->
+			Account a = getAccount(properties)
+			accounts.add(a)
+		}
+
+		return accounts
+
+	}
+
+	public static List<Allocation> getAllAllocations() {
+
+		ExternalCommand ec = executeGoldCommand("glsalloc --show Id,Account,Active,StartTime,EndTime,Amount,CreditLimit,Deposited,Description --raw")
+
+		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
+
+		def allocs = []
+
+		map.each { name, properties ->
+			Allocation a = getAllocation(properties)
+			allocs.add(a)
+		}
+
+		return allocs
+
+	}
+
+	public static List<String> getAllMachineNames() {
+
+		List<Machine> allMachines = getAllMachines()
+
+		List<String> names = Lists.newLinkedList()
+
+		for (Machine m : allMachines) {
+			names.add(m.getName())
+		}
+		return names
+
+	}
+
 	public static List<Machine> getAllMachines() {
 
 		ExternalCommand ec = executeGoldCommand("glsmachine --raw")
@@ -739,6 +677,95 @@ class GoldWrap {
 
 		return machines
 
+
+	}
+
+	public static Allocation getAllocation(int id) {
+		List<String> command = Lists.newArrayList("glsalloc")
+		command.add("--raw")
+		command.add(Integer.toString(id))
+
+		ExternalCommand ec = executeGoldCommand(command)
+
+		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
+
+		Map props = map[Integer.toString(id)]
+
+		if ( props == null ) {
+			throw new AllocationFault("Can't get allocation "+id, "Allocation does not exist in Gold database.", 404)
+		}
+		return getAllocation(props)
+
+	}
+
+	public static Allocation getAllocation(Map properties) {
+
+		def id = properties.get(ID_KEY)
+
+		if ( ! id ) {
+			throw new AccountFault("Can't get Allocation.", "No allocation id.", 500)
+		}
+
+		def account = properties.get(ACCOUNT_KEY)
+		def active = properties.get(ACTIVE_KEY)
+		def startTime = properties.get(START_TIME_KEY)
+		def endTime = properties.get(END_TIME_KEY)
+		def amount = properties.get(AMOUNT_KEY)
+		def creditLimit = properties.get(CREDIT_LIMIT_KEY)
+		def deposited = properties.get(DEPOSITED_KEY)
+		def desc = properties.get(DESCRIPTION_KEY)
+//		def machines = properties.get(MACHINES_KEY)
+//		def clazz = properties.get(CLASS_KEY)
+
+		Allocation alloc = new Allocation()
+		alloc.setAllocationId(Integer.parseInt(id))
+		alloc.setAccountId(Integer.parseInt(account))
+		if ( active ) {
+			alloc.setActive(Boolean.parseBoolean(active))
+		}
+		if (startTime) {
+			alloc.setStartDate(startTime)
+		}
+		if (endTime) {
+			alloc.setEndDate(endTime)
+		}
+		if (amount) {
+			alloc.setAmount(Long.parseLong(amount))
+		}
+		if(creditLimit) {
+			alloc.setCreditLimit(Long.parseLong(creditLimit))
+		}
+		if(deposited) {
+			alloc.setDeposited(Long.parseLong(deposited))
+		}
+		if(desc) {
+			alloc.setDescription(desc)
+		}
+//		if(machines) {
+//			alloc.setMachines(machines.tokenize(','))
+//		}
+//		if ( clazz ) {
+//			alloc.setClazz(clazz)
+//		}
+
+		return alloc
+
+
+
+	}
+
+	public static List<Allocation> getAllocations(String projectId) {
+
+
+		List<Account> accounts = getAccounts(projectId)
+
+		List<Integer> accountIds = accounts.collect { it ->
+			it.getAccountId()
+		}
+
+		return getAllAllocations().findAll { it ->
+			accountIds.contains(it.getAccountId())
+		}
 
 	}
 
@@ -960,6 +987,7 @@ class GoldWrap {
 
 	}
 
+
 	static boolean isRegistered(String username) {
 
 		ExternalCommand gc = executeGoldCommand("glsuser -show Name -quiet")
@@ -991,7 +1019,6 @@ class GoldWrap {
 
 		println p.getUsers()
 	}
-
 
 	public static void modifyMachine(String name, String arch, String os, String desc) {
 
@@ -1167,6 +1194,56 @@ class GoldWrap {
 		}
 
 		return false;
+
+	}
+
+	private static void syncProjectAccounts(Project p) {
+
+		def accounts = getAllAccounts().findAll { it ->
+			it.getProjects().contains(p.getProjectId())
+		}
+
+		List<String> projectUsers = p.getUsers()
+
+		accounts.each { a ->
+
+			List<String> accountUsers = a.getUsers()
+			List<String> removeUsers = accountUsers.findAll { it ->
+				! projectUsers.contains(it)
+			}
+			List<String> addUsers = projectUsers.findAll { it ->
+				! accountUsers.contains(it)
+			}
+
+			if ( removeUsers ) {
+				List<String> command = Lists.newArrayList("gchaccount")
+				command.add("--delUsers")
+				command.add(removeUsers.join(","))
+				command.add("-a")
+				command.add(a.getAccountId().toString())
+
+				ExternalCommand ec = executeGoldCommand(command)
+
+				if (ec.getExitCode() != 0) {
+					throw new AccountFault("Could not change account "+a.getAccountId(), "Removing users "+removeUsers.join(",")+ " failed.")
+				}
+			}
+			if ( addUsers ) {
+				List<String> command = Lists.newArrayList("gchaccount")
+				command.add("--addUsers")
+				command.add(addUsers.join(","))
+				command.add("-a")
+				command.add(a.getAccountId().toString())
+
+				ExternalCommand ec = executeGoldCommand(command)
+
+				if (ec.getExitCode() != 0) {
+					throw new AccountFault("Could not change account "+a.getAccountId(), "Adding users "+addUsers.join(",")+ " failed.")
+				}
+			}
+
+		}
+
 
 	}
 
