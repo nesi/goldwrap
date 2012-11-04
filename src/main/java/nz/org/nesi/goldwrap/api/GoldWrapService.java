@@ -51,6 +51,15 @@ public interface GoldWrapService {
 	@Path("/allocations/{allocationId}")
 	public void deleteAllocation(@PathParam("allocationId") int id);
 
+	/**
+	 * Modifies allocations.
+	 * 
+	 * Be ware that only the start time, end time and credit limit as well as
+	 * the description can be changed.
+	 * 
+	 * @param alloc
+	 *            the allocation
+	 */
 	@POST
 	@Path("/allocations")
 	public void modifyAllocation(Allocation alloc);

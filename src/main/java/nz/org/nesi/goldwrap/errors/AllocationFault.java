@@ -22,7 +22,6 @@ public class AllocationFault extends ServiceException {
 		getFaultInfo().setErrorCode(ERROR_CODE);
 		getFaultInfo().setReason(reason);
 		getFaultInfo().setResource(all);
-
 	}
 
 	public AllocationFault(String message, FaultInfo faultInfo) {
