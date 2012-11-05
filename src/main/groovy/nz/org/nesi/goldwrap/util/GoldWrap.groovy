@@ -805,7 +805,7 @@ class GoldWrap {
 	}
 
 	public static List<User> getAllUsers() {
-		ExternalCommand ec = executeGoldCommand("glsuser --show Name,CommonName,PhoneNumber,EmailAddress,Organization,Description --raw")
+		ExternalCommand ec = executeGoldCommand("glsuser --show Name,CommonName,PhoneNumber,EmailAddress,Organization,Description,Affiliation --raw")
 
 		def map = parseGLSOutput(ec.getStdOut())
 
@@ -975,7 +975,7 @@ class GoldWrap {
 
 	public static User getUser(String username) {
 
-		ExternalCommand ec = executeGoldCommand("glsuser --show Name,CommonName,PhoneNumber,EmailAddress,Organization,Description --raw " + username)
+		ExternalCommand ec = executeGoldCommand("glsuser --show Name,CommonName,PhoneNumber,EmailAddress,Organization,Description,Affiliation --raw " + username)
 
 		def map = parseGLSOutput(ec.getStdOut())
 
