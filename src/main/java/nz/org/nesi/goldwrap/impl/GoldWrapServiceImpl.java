@@ -7,7 +7,6 @@ import javax.ws.rs.Path;
 
 import nz.org.nesi.goldwrap.api.GoldWrapService;
 import nz.org.nesi.goldwrap.domain.Allocation;
-import nz.org.nesi.goldwrap.domain.DepositAllocation;
 import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Organization;
 import nz.org.nesi.goldwrap.domain.Project;
@@ -31,7 +30,7 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 		initialize();
 	}
 
-	public void addAllocation(String projectId, DepositAllocation alloc) {
+	public void addAllocation(String projectId, Allocation alloc) {
 		alloc.validate(true);
 		GoldWrap.addAllocationToProject(projectId, alloc);
 	}

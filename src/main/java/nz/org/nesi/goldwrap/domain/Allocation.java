@@ -4,6 +4,11 @@ import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import nz.org.nesi.goldwrap.errors.AllocationFault;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 /**
@@ -14,6 +19,10 @@ import com.google.common.collect.Lists;
  */
 @XmlRootElement
 public class Allocation {
+
+	public final static List<String> CLASSES = ImmutableList.of(
+			"ProposalDevelopment", "ResearchFunded", "ResearchUnfunded",
+			"Private", "Collaborator");
 
 	private int allocationId;
 
@@ -29,9 +38,11 @@ public class Allocation {
 	private String description;
 	private List<String> machines = Lists.newArrayList();
 	private String clazz = "";
+
 	private Allocation() {
 
 	}
+
 	public int getAccountId() {
 		return accountId;
 	}
@@ -118,6 +129,34 @@ public class Allocation {
 
 	public void setStartDate(String startDate) {
 		this.startDate = startDate;
+	}
+
+	public void validate(boolean fullCheck) {
+
+		if (StringUtils.isBlank(clazz)) {
+			throw new AllocationFault(this, "Invalid Allocation.",
+					"'clazz' must be specified");
+		}
+
+		if (!CLASSES.contains(clazz)) {
+			throw new AllocationFault(this, "Invalid Allocation.", clazz
+					+ " not a valid clazz");
+		}
+
+		if (amount < 0) {
+			throw new AllocationFault(this, "Invalid Allocation.",
+					"Allocation must be > 0");
+		}
+
+		if (machines == null || machines.size() == 0) {
+			throw new AllocationFault(this, "Invalid allocation.",
+					"No machine(s) specified");
+		}
+
+		// if (!fullCheck) {
+		// return;
+		// }
+
 	}
 
 }

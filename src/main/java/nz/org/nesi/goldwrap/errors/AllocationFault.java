@@ -2,7 +2,7 @@ package nz.org.nesi.goldwrap.errors;
 
 import javax.xml.ws.WebFault;
 
-import nz.org.nesi.goldwrap.domain.DepositAllocation;
+import nz.org.nesi.goldwrap.domain.Allocation;
 
 /**
  * Thrown when something machine related is not correct (machinename not valid,
@@ -17,7 +17,7 @@ public class AllocationFault extends ServiceException {
 	private static final long serialVersionUID = 1L;
 	private static final Integer ERROR_CODE = 400;
 
-	public AllocationFault(DepositAllocation all, String message, String reason) {
+	public AllocationFault(Allocation all, String message, String reason) {
 		super(message, new FaultInfo());
 		getFaultInfo().setErrorCode(ERROR_CODE);
 		getFaultInfo().setReason(reason);
@@ -39,7 +39,7 @@ public class AllocationFault extends ServiceException {
 
 	}
 
-	public AllocationFault(DepositAllocation a, String message, String reason,
+	public AllocationFault(Allocation a, String message, String reason,
 			Integer errorCode) {
 		super(message, new FaultInfo());
 		getFaultInfo().setErrorCode(errorCode);

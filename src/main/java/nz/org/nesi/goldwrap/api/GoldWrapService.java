@@ -12,7 +12,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 import nz.org.nesi.goldwrap.domain.Allocation;
-import nz.org.nesi.goldwrap.domain.DepositAllocation;
 import nz.org.nesi.goldwrap.domain.Machine;
 import nz.org.nesi.goldwrap.domain.Organization;
 import nz.org.nesi.goldwrap.domain.Project;
@@ -39,7 +38,7 @@ public interface GoldWrapService {
 	@POST
 	@Path("/projects/{projectId}/deposit")
 	public void addAllocation(@PathParam("projectId") String projectId,
-			DepositAllocation alloc);
+			Allocation alloc);
 
 	/**
 	 * Delete the allocation with the given id.

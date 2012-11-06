@@ -4,7 +4,6 @@ import groovy.util.logging.Slf4j
 import nz.org.nesi.goldwrap.Config
 import nz.org.nesi.goldwrap.domain.Account
 import nz.org.nesi.goldwrap.domain.Allocation
-import nz.org.nesi.goldwrap.domain.DepositAllocation
 import nz.org.nesi.goldwrap.domain.ExternalCommand
 import nz.org.nesi.goldwrap.domain.Machine
 import nz.org.nesi.goldwrap.domain.Organization
@@ -18,7 +17,6 @@ import nz.org.nesi.goldwrap.errors.ProjectFault
 import nz.org.nesi.goldwrap.errors.UserFault
 
 import org.apache.commons.lang3.StringUtils
-import org.joda.time.DateMidnight
 
 import com.google.common.base.Joiner
 import com.google.common.base.Splitter
@@ -56,26 +54,30 @@ class GoldWrap {
 	static final String DEPOSITED_KEY = "Deposited"
 	static final String CLASS_KEY = "Class"
 
-	public static synchronized void addAllocationToProject(String projectId, DepositAllocation alloc) {
+	public static synchronized void addAllocationToProject(String projectId, Allocation alloc) {
 
 		Project proj = getProject(projectId)
 
 		int acc_id = createAccountAndChangeProject(proj, alloc)
 
-		DateMidnight start = new DateMidnight(alloc.getStartyear(), 	alloc.getStartmonth(), alloc.getStartday())
-		DateMidnight end = null
-
 		log.debug("Depositing allocation into project " + projectId)
 
+//		DateMidnight start = new DateMidnight(alloc.getStartyear(), 	alloc.getStartmonth(), alloc.getStartday())
+//		DateMidnight end = null
+//			end = start.plusMonths(alloc.getRechargemonths()).minusDays(1)
 
-			end = start.plusMonths(alloc.getRechargemonths()).minusDays(1)
-			log.debug("deposit for period: {} - {}", start.toString(), end.toString())
+		String startString = alloc.getStartDate()
+		String endString = alloc.getEndDate()
+
+		log.debug("deposit for period: {} - {}", startString, endString)
+
+
 			List<String> depositcommand = Lists.newArrayList("gdeposit")
 			depositcommand.add("-a")
 			depositcommand.add(Integer.toString(acc_id))
 
-			String startString = start.getYear() + "-" + String.format("%02d", start.getMonthOfYear()) + "-" + String.format("%02d", start.getDayOfMonth())
-			String endString = end.getYear() + "-" + String.format("%02d", end.getMonthOfYear()) + "-" + String.format("%02d", end.getDayOfMonth())
+//			String startString = start.getYear() + "-" + String.format("%02d", start.getMonthOfYear()) + "-" + String.format("%02d", start.getDayOfMonth())
+//			String endString = end.getYear() + "-" + String.format("%02d", end.getMonthOfYear()) + "-" + String.format("%02d", end.getDayOfMonth())
 
 			depositcommand.add("-s")
 			depositcommand.add(startString)
@@ -94,14 +96,16 @@ class GoldWrap {
 			// depositcommand.add("-X");
 			// depositcommand.add("Class=" + clazz);
 
-			def amount = alloc.getAllocation()
+			def amount = alloc.getAmount()
 			depositcommand.add(Long.toString(amount))
 
 			ExternalCommand ec = executeGoldCommand(depositcommand)
 
 			if (ec.getExitCode() != 0) {
-				throw new AllocationFault(alloc, "Could not add allocation.",
-				Joiner.on('\n').join(ec.getStdErr()));
+
+				String message = "Stdout: "+Joiner.on(' - ').join(ec.getStdOut())
+				message = message + "  --  Stderr: "+Joiner.on(' - ').join(ec.getStdErr())
+				throw new AllocationFault(alloc, "Could not add allocation.", message)
 			}
 
 //			start = end.plusDays(1)
@@ -145,7 +149,7 @@ class GoldWrap {
 	 * @param alloc
 	 * @return
 	 */
-	private static int createAccountAndChangeProject(Project proj, DepositAllocation alloc) {
+	private static int createAccountAndChangeProject(Project proj, Allocation alloc) {
 
 		List<String> machines = alloc.getMachines()
 
@@ -525,7 +529,12 @@ class GoldWrap {
 	}
 
 	private static ExternalCommand executeGoldCommand(List<String> command) {
+		return executeGoldCommand(command, -1)
+	}
+
+	private static ExternalCommand executeGoldCommand(List<String> command, int expectedExitCode) {
 		ExternalCommand gc = new ExternalCommand(command)
+		gc.setExpectedExitCode(expectedExitCode)
 		execute(gc)
 		gc.verify()
 		return gc
@@ -634,7 +643,7 @@ class GoldWrap {
 
 	public static List<Allocation> getAllAllocations() {
 
-		ExternalCommand ec = executeGoldCommand("glsalloc --show Id,Account,Active,StartTime,EndTime,Amount,CreditLimit,Deposited,Description --raw")
+		ExternalCommand ec = executeGoldCommand("glsalloc --show Id,Account,Active,StartTime,EndTime,Amount,CreditLimit,Deposited,Description,Machines --raw")
 
 		def map = parseGLSOutput(ec.getStdOut(), ID_KEY)
 
@@ -682,6 +691,8 @@ class GoldWrap {
 
 	public static Allocation getAllocation(int id) {
 		List<String> command = Lists.newArrayList("glsalloc")
+		command.add("--show")
+		command.add("Id,Account,Active,StartTime,EndTime,Amount,CreditLimit,Deposited,Description,Machines")
 		command.add("--raw")
 		command.add(Integer.toString(id))
 
@@ -714,8 +725,8 @@ class GoldWrap {
 		def creditLimit = properties.get(CREDIT_LIMIT_KEY)
 		def deposited = properties.get(DEPOSITED_KEY)
 		def desc = properties.get(DESCRIPTION_KEY)
-//		def machines = properties.get(MACHINES_KEY)
-//		def clazz = properties.get(CLASS_KEY)
+		def machines = properties.get(MACHINES_KEY)
+		def clazz = properties.get(CLASS_KEY)
 
 		Allocation alloc = new Allocation()
 		alloc.setAllocationId(Integer.parseInt(id))
