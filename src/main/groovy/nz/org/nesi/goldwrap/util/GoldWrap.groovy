@@ -1109,7 +1109,7 @@ class GoldWrap {
 
 	}
 
-	public static void modifyUser(String username, String organization, String affiliation, String fullName, String email, String phone) {
+	public static void modifyUser(String username, String fullName, String organization, String affiliation, String email, String phone) {
 
 		if (StringUtils.isBlank(username)) {
 			throw new UserFault("Can't modify user.",
@@ -1125,7 +1125,7 @@ class GoldWrap {
 		List<String> command = Lists.newArrayList("gchuser")
 		if (StringUtils.isNotBlank(fullName)) {
 			command.add("-n")
-			command.add("fullname")
+			command.add(fullName)
 		}
 		if (StringUtils.isNotBlank(email)) {
 			command.add("-E")
