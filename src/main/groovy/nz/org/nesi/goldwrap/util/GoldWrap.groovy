@@ -1121,6 +1121,10 @@ class GoldWrap {
 			+ " not in Gold database.", 404)
 		}
 
+		if (!organizationExists(organization)) {
+			createOrganization(organization, "");
+		}
+
 
 		List<String> command = Lists.newArrayList("gchuser")
 		if (StringUtils.isNotBlank(fullName)) {
