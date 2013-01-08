@@ -62,9 +62,9 @@ class GoldWrap {
 
 		log.debug("Depositing allocation into project " + projectId)
 
-//		DateMidnight start = new DateMidnight(alloc.getStartyear(), 	alloc.getStartmonth(), alloc.getStartday())
-//		DateMidnight end = null
-//			end = start.plusMonths(alloc.getRechargemonths()).minusDays(1)
+		//		DateMidnight start = new DateMidnight(alloc.getStartyear(), 	alloc.getStartmonth(), alloc.getStartday())
+		//		DateMidnight end = null
+		//			end = start.plusMonths(alloc.getRechargemonths()).minusDays(1)
 
 		String startString = alloc.getStartDate()
 		String endString = alloc.getEndDate()
@@ -72,47 +72,47 @@ class GoldWrap {
 		log.debug("deposit for period: {} - {}", startString, endString)
 
 
-			List<String> depositcommand = Lists.newArrayList("gdeposit")
-			depositcommand.add("-a")
-			depositcommand.add(Integer.toString(acc_id))
+		List<String> depositcommand = Lists.newArrayList("gdeposit")
+		depositcommand.add("-a")
+		depositcommand.add(Integer.toString(acc_id))
 
-//			String startString = start.getYear() + "-" + String.format("%02d", start.getMonthOfYear()) + "-" + String.format("%02d", start.getDayOfMonth())
-//			String endString = end.getYear() + "-" + String.format("%02d", end.getMonthOfYear()) + "-" + String.format("%02d", end.getDayOfMonth())
+		//			String startString = start.getYear() + "-" + String.format("%02d", start.getMonthOfYear()) + "-" + String.format("%02d", start.getDayOfMonth())
+		//			String endString = end.getYear() + "-" + String.format("%02d", end.getMonthOfYear()) + "-" + String.format("%02d", end.getDayOfMonth())
 
-			depositcommand.add("-s")
-			depositcommand.add(startString)
-			depositcommand.add("-e")
-			depositcommand.add(endString)
-			depositcommand.add("-z")
+		depositcommand.add("-s")
+		depositcommand.add(startString)
+		depositcommand.add("-e")
+		depositcommand.add(endString)
+		depositcommand.add("-z")
 
-//			Long allocationPerPeriod = alloc.getAllocation()
-//
-//			depositcommand.add(allocationPerPeriod.toString())
-//			depositcommand.add("-L")
-//			depositcommand.add(allocationPerPeriod)
-			depositcommand.add("-h")
+		//			Long allocationPerPeriod = alloc.getAllocation()
+		//
+		//			depositcommand.add(allocationPerPeriod.toString())
+		//			depositcommand.add("-L")
+		//			depositcommand.add(allocationPerPeriod)
+		depositcommand.add("-h")
 
-			// String clazz = alloc.getClazz();
-			// depositcommand.add("-X");
-			// depositcommand.add("Class=" + clazz);
+		// String clazz = alloc.getClazz();
+		// depositcommand.add("-X");
+		// depositcommand.add("Class=" + clazz);
 
-			def amount = alloc.getAmount()
-			depositcommand.add(Long.toString(amount))
+		def amount = alloc.getAmount()
+		depositcommand.add(Long.toString(amount))
 
-			ExternalCommand ec = executeGoldCommand(depositcommand)
+		ExternalCommand ec = executeGoldCommand(depositcommand)
 
-			if (ec.getExitCode() != 0) {
+		if (ec.getExitCode() != 0) {
 
-				String message = "Stdout: "+Joiner.on(' - ').join(ec.getStdOut())
-				message = message + "  --  Stderr: "+Joiner.on(' - ').join(ec.getStdErr())
-				throw new AllocationFault(alloc, "Could not add allocation.", message)
-			}
+			String message = "Stdout: "+Joiner.on(' - ').join(ec.getStdOut())
+			message = message + "  --  Stderr: "+Joiner.on(' - ').join(ec.getStdErr())
+			throw new AllocationFault(alloc, "Could not add allocation.", message)
+		}
 
-//			start = end.plusDays(1)
-//
-//			if ( alloc.getClazz() ) {
-//				String changeAllocCommand = "Allocation Modify Id==19 Class="+alloc.getClazz()
-//			}
+		//			start = end.plusDays(1)
+		//
+		//			if ( alloc.getClazz() ) {
+		//				String changeAllocCommand = "Allocation Modify Id==19 Class="+alloc.getClazz()
+		//			}
 
 
 
@@ -752,12 +752,12 @@ class GoldWrap {
 		if(desc) {
 			alloc.setDescription(desc)
 		}
-//		if(machines) {
-//			alloc.setMachines(machines.tokenize(','))
-//		}
-//		if ( clazz ) {
-//			alloc.setClazz(clazz)
-//		}
+		//		if(machines) {
+		//			alloc.setMachines(machines.tokenize(','))
+		//		}
+		//		if ( clazz ) {
+		//			alloc.setClazz(clazz)
+		//		}
 
 		return alloc
 
@@ -1215,6 +1215,9 @@ class GoldWrap {
 	private static void syncProjectAccounts(Project p) {
 
 		def accounts = getAllAccounts().findAll { it ->
+			if ( ! it.getProjects() ) {
+				return false
+			}
 			it.getProjects().contains(p.getProjectId())
 		}
 
