@@ -207,6 +207,12 @@ public interface GoldWrapService {
 	public void addUserToProject(@PathParam("projectId") String projectId,
 			String username);
 
+	@POST
+	@Path("/projects/{projectId}/remove_user")
+	@Consumes("text/plain")
+	public void removeUserFromProject(@PathParam("projectId") String projectId,
+			String username);
+
 	/**
 	 * Creates a machine in Gold.
 	 * 

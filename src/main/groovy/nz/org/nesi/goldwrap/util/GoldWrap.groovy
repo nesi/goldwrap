@@ -142,6 +142,31 @@ class GoldWrap {
 		syncProjectAccounts(p)
 	}
 
+
+	public static void removeUserFromProject(String projectId, String username) {
+
+		if ( ! isRegistered(username) ) {
+			throw new UserFault("Can't retrieve user.", "User " + username
+			+ " not in Gold database.", 404)
+		}
+
+		if ( ! projectExists(projectId) ) {
+			throw new ProjectFault("Can't find project.", "Project "+projectId+" not in Gold database.", 404)
+		}
+
+		log.debug("Removing user "+username+" from project "+projectId)
+		ExternalCommand ec = executeGoldCommand('gchproject --delUsers '+username+ " "+projectId)
+
+		Project p = getProject(projectId)
+
+		if ( p.getUsers().contains(username)) {
+			throw new ProjectFault("Could not remove user "+username+" from project "+projectId+".", "Unknown reason", 500)
+		}
+
+		log.debug('Synchronizing project accounts...')
+		syncProjectAccounts(p)
+	}
+
 	/**
 	 * Creates a new account for each new allocation.
 	 *

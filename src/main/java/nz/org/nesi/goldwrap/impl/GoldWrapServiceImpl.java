@@ -41,6 +41,12 @@ public class GoldWrapServiceImpl implements GoldWrapService {
 
 	}
 
+	public void removeUserFromProject(String projectId, String username) {
+
+		GoldWrap.removeUserFromProject(projectId, username);
+
+	}
+
 	public void createMachine(Machine machine) {
 
 		String name = machine.getName();
